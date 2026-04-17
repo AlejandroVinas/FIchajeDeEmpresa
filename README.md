@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Sistema de Fichaje por Ubicación
 
 Stack: Node.js + Express + SQLite | Flutter (Android / iOS / Escritorio) | HTML Panel Admin
@@ -129,3 +130,7 @@ Editar la constante `API` al inicio del `<script>` con la URL real del backend.
 | GET    | /push/vapid-public-key        | Admin   | Clave pública VAPID                |
 | POST   | /push/suscribir               | Admin   | Registrar suscripción push         |
 | DELETE | /push/suscribir               | Admin   | Cancelar suscripción push          |
+
+# FIchajeDeEmpresa
+**Victor**
+c4013a1 (tu mensaje)
