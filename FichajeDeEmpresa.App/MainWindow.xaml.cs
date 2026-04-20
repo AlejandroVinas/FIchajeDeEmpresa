@@ -1,71 +1,27 @@
-﻿using System.Windows;
-using System.Windows.Input;
-using FichajeDeEmpresa.App.Services;
+﻿using System;
+using System.Windows;
 using FichajeDeEmpresa.Shared.Contracts.Auth;
 
 namespace FichajeDeEmpresa.App;
 
 public partial class MainWindow : Window
 {
-    private readonly ApiClient _apiClient = new();
+    private readonly LoginResponseDto _loggedUser;
 
-    public MainWindow()
+    public MainWindow(LoginResponseDto loggedUser)
     {
+        _loggedUser = loggedUser ?? throw new ArgumentNullException(nameof(loggedUser));
+
         InitializeComponent();
+        LoadUserData();
     }
 
-    private async void LoginButton_Click(object sender, RoutedEventArgs e)
+    private void LoadUserData()
     {
-        await ExecuteLoginAsync();
-    }
-
-    private async void PasswordBox_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
-        {
-            await ExecuteLoginAsync();
-        }
-    }
-
-    private async Task ExecuteLoginAsync()
-    {
-        StatusTextBlock.Text = string.Empty;
-
-        var request = new LoginRequestDto
-        {
-            UserName = UserNameTextBox.Text.Trim(),
-            Password = PasswordBox.Password
-        };
-
-        SetBusyState(true);
-
-        var result = await _apiClient.LoginAsync(request);
-
-        SetBusyState(false);
-
-        if (!result.IsSuccess)
-        {
-            StatusTextBlock.Text = result.Message;
-            return;
-        }
-
-        MessageBox.Show(
-            $"Bienvenida/o {result.FullName}\n" +
-            $"Rol: {result.Role}\n" +
-            $"Horas diarias configuradas: {result.ExpectedDailyHours:0.##}",
-            "Login correcto",
-            MessageBoxButton.OK,
-            MessageBoxImage.Information);
-
-        StatusTextBlock.Text = result.Message;
-    }
-
-    private void SetBusyState(bool isBusy)
-    {
-        LoginButton.IsEnabled = !isBusy;
-        UserNameTextBox.IsEnabled = !isBusy;
-        PasswordBox.IsEnabled = !isBusy;
-
-        LoginButton.Content = isBusy ? "Conectando..." : "Iniciar sesión";
+        WelcomeTextBlock.Text = $"Bienvenido/a, {_loggedUser.FullName}";
+        UserIdValueTextBlock.Text = _loggedUser.UserId.ToString();
+        FullNameValueTextBlock.Text = _loggedUser.FullName;
+        RoleValueTextBlock.Text = _loggedUser.Role;
+        ExpectedDailyHoursValueTextBlock.Text = $"{_loggedUser.ExpectedDailyHours:0.##} horas/día";
     }
 }
