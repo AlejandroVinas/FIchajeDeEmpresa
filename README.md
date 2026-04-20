@@ -1,136 +1,142 @@
-<<<<<<< HEAD
-# Sistema de Fichaje por Ubicación
+# FichajeDeEmpresa
 
-Stack: Node.js + Express + SQLite | Flutter (Android / iOS / Escritorio) | HTML Panel Admin
+Aplicación de escritorio para control de fichaje de horas en una empresa, pensada para varios equipos dentro de la red interna de la empresa.
 
----
+## Objetivo del proyecto
 
-## Estructura
+El objetivo es construir una app de Windows donde cada trabajador pueda:
 
-```
-fichaje/
-├── backend/          → API REST Node.js + Express
-├── flutter_app/      → App móvil y escritorio (Flutter)
-└── admin_panel/      → Panel web de administración (HTML + JS)
-```
+- iniciar sesión
+- fichar entrada
+- fichar salida
+- ver sus horas trabajadas
+- ver sus horas normales y horas extra
 
----
+Además, el sistema tendrá una parte administrativa para gestionar usuarios, revisar fichajes y resolver incidencias.
 
-## 1. Backend
+## Arquitectura elegida
 
-### Configuración
+Hemos decidido usar una arquitectura cliente-servidor dentro de la empresa.
 
-```bash
-cd backend
-cp .env.example .env
-```
+### Cliente
 
-Editar `.env`:
-- `JWT_SECRET` → cadena aleatoria larga (mín. 32 chars)
-- `EMPRESA_LAT` / `EMPRESA_LON` → coordenadas GPS reales de la empresa
-- `EMPRESA_RADIO_METROS` → radio permitido en metros (ej: 100)
-- `EMPRESA_IPS` → IP pública de la oficina para fichaje desde escritorio
-- `VAPID_EMAIL` → email del administrador
-- `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` → generar con:
+Cada trabajador tendrá instalada una app de escritorio en su equipo.
 
-```bash
-npm run vapid
-```
+Tecnología:
+- WPF
+- C#
+- .NET 8
 
-### Instalación y arranque
+### Servidor
 
-```bash
-npm install
-node seed.js      # crea el primer admin (editar email/pass antes)
-node server.js
-```
+Habrá un equipo dentro de la empresa que actuará como servidor.
 
-### Con Docker
+Ese equipo alojará:
+- una API en ASP.NET Core
+- la base de datos central
 
-```bash
-docker compose up -d --build
-docker compose exec backend node seed.js
-```
+Tecnología:
+- ASP.NET Core Web API
+- SQL Server (más adelante)
 
----
+### Proyecto compartido
 
-## 2. Flutter App
+También hay un proyecto compartido con clases comunes entre la app y la API.
 
-### Configuración
+## Estructura de la solución
 
-Editar `lib/config.dart`:
-- `apiUrl` → URL real del backend (ej: `http://192.168.1.100:3000`)
-- `empresaLat` / `empresaLon` / `radioMetros` → mismos valores que el backend
+La solución está dividida en 3 proyectos:
 
-### Permisos
+### `FichajeDeEmpresa.App`
 
-- **Android**: el `AndroidManifest.xml` incluido ya tiene los permisos necesarios.
-- **iOS**: el `Info.plist` incluido tiene las claves de ubicación.
-  Integrar las claves dentro del `<dict>` del Info.plist generado por Flutter.
+Aplicación de escritorio WPF que usarán los empleados y administradores.
 
-### Instalación y compilación
+### `FichajeDeEmpresa.Api`
 
-```bash
-cd flutter_app
-flutter pub get
+Backend del sistema. Recibe peticiones de la app y centraliza la lógica del negocio.
 
-# Desarrollo
-flutter run
+### `FichajeDeEmpresa.Shared`
 
-# Producción
-flutter build apk          # Android
-flutter build ios          # iOS (requiere Mac + Xcode)
-flutter build linux        # Linux escritorio
-flutter build windows      # Windows escritorio
-```
+Proyecto compartido con DTOs y contratos comunes entre cliente y servidor.
 
-### Flujo de firma digital (Ed25519)
+## Estado actual del proyecto
 
-1. El empleado instala la app → se generan claves automáticamente
-2. El empleado pulsa **"Ver mi clave pública"** y copia el valor base64
-3. El admin pega esa clave al crear la cuenta del empleado en el panel
-4. Cada fichaje se firma en el dispositivo antes de enviarse al servidor
+Actualmente el proyecto ya tiene funcionando lo siguiente:
 
----
+- solución con 3 proyectos
+- app WPF compilando correctamente
+- API compilando correctamente
+- comunicación entre la app y la API
+- pantalla de login
+- autenticación de prueba en memoria
+- usuarios de prueba para validar el flujo
 
-## 3. Panel de Administración
+### Importante
 
-Abrir `admin_panel/index.html` en un navegador.
+En este momento **todavía no estamos usando base de datos real**.
 
-> ⚠️ Para las notificaciones push el panel debe servirse por HTTPS o localhost.
-> En producción: colocar los ficheros `index.html` y `sw.js` en un servidor web.
+El login actual funciona con usuarios de prueba cargados en memoria dentro de la API. Esto se ha hecho así para validar primero la arquitectura y la comunicación entre proyectos antes de pasar a SQL Server.
 
-Editar la constante `API` al inicio del `<script>` con la URL real del backend.
+## Usuarios de prueba actuales
 
-### Funcionalidades
+Se pueden usar estos usuarios para probar el login:
 
-- Crear / eliminar empleados
-- Subir / actualizar clave pública Ed25519 de cada empleado
-- Ver todos los fichajes con ✅/❌ de firma digital
-- Filtrar por empleado, tipo (entrada/salida) y rango de fechas
-- Exportar CSV (respeta los filtros activos)
-- Paginación configurable
-- Notificaciones push en tiempo real cuando alguien ficha
+- Usuario: `admin`
+  Contraseña: `admin123`
 
----
+- Usuario: `juan`
+  Contraseña: `1234`
 
-## API — Resumen de endpoints
+- Usuario: `maria`
+  Contraseña: `1234`
 
-| Método | Ruta                          | Auth    | Descripción                        |
-|--------|-------------------------------|---------|------------------------------------|
-| POST   | /auth/login                   | —       | Login empleado o admin             |
-| GET    | /empleados                    | Admin   | Listar empleados                   |
-| POST   | /empleados                    | Admin   | Crear empleado                     |
-| PUT    | /empleados/:id/clave-publica  | Admin   | Actualizar clave pública           |
-| DELETE | /empleados/:id                | Admin   | Eliminar empleado                  |
-| POST   | /fichajes                     | Empleado| Registrar fichaje                  |
-| GET    | /fichajes                     | Admin   | Listar fichajes (filtros + pagina) |
-| GET    | /fichajes/empleado/:id        | Admin   | Fichajes de un empleado            |
-| GET    | /fichajes/exportar.csv        | Admin   | Exportar CSV                       |
-| GET    | /push/vapid-public-key        | Admin   | Clave pública VAPID                |
-| POST   | /push/suscribir               | Admin   | Registrar suscripción push         |
-| DELETE | /push/suscribir               | Admin   | Cancelar suscripción push          |
+## Horas diarias configuradas de prueba
 
-# FIchajeDeEmpresa
-**Victor**
-c4013a1 (tu mensaje)
+Actualmente los usuarios de prueba tienen estas horas:
+
+- `admin` -> 8 horas/día
+- `juan` -> 8 horas/día
+- `maria` -> 4 horas/día
+
+Esto sirve para validar más adelante el cálculo de horas normales y horas extra.
+
+## Flujo actual
+
+Ahora mismo el flujo es este:
+
+1. Se arranca la API
+2. Se arranca la app WPF
+3. El usuario introduce usuario y contraseña
+4. La app llama al endpoint de login de la API
+5. La API valida el usuario en memoria
+6. Si el login es correcto, la app muestra un mensaje con los datos del usuario
+
+## Endpoints disponibles actualmente
+
+### `GET /api/health`
+
+Sirve para comprobar que la API está viva.
+
+### `POST /api/auth/login`
+
+Recibe usuario y contraseña y devuelve el resultado del login.
+
+## Requisitos para desarrollo
+
+Para trabajar con el proyecto hace falta:
+
+- Windows
+- .NET 8 SDK
+- VS Code
+- extensión de C# para VS Code
+
+## Cómo abrir el proyecto
+
+Abrir la carpeta raíz del repositorio en VS Code.
+
+## Cómo compilar la solución
+
+Desde la raíz del proyecto ejecutar:
+
+```powershell
+dotnet build .\FIchajeDeEmpresa.sln

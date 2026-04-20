@@ -1,0 +1,97 @@
+{
+  "version": 3,
+  "targets": {
+    "net8.0-windows7.0": {
+      "FichajeDeEmpresa.Shared/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v8.0",
+        "compile": {
+          "bin/placeholder/FichajeDeEmpresa.Shared.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/FichajeDeEmpresa.Shared.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FichajeDeEmpresa.Shared/1.0.0": {
+      "type": "project",
+      "path": "../FichajeDeEmpresa.Shared/FichajeDeEmpresa.Shared.csproj",
+      "msbuildProject": "../FichajeDeEmpresa.Shared/FichajeDeEmpresa.Shared.csproj"
+    }
+  },
+  "projectFileDependencyGroups": {
+    "net8.0-windows7.0": [
+      "FichajeDeEmpresa.Shared >= 1.0.0"
+    ]
+  },
+  "packageFolders": {
+    "C:\\Users\\Araceli\\.nuget\\packages\\": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "C:\\Users\\Araceli\\Desktop\\github\\FIchajeDeEmpresa\\FichajeDeEmpresa.App\\FichajeDeEmpresa.App.csproj",
+      "projectName": "FichajeDeEmpresa.App",
+      "projectPath": "C:\\Users\\Araceli\\Desktop\\github\\FIchajeDeEmpresa\\FichajeDeEmpresa.App\\FichajeDeEmpresa.App.csproj",
+      "packagesPath": "C:\\Users\\Araceli\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Araceli\\Desktop\\github\\FIchajeDeEmpresa\\FichajeDeEmpresa.App\\obj\\",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "C:\\Users\\Araceli\\AppData\\Roaming\\NuGet\\NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net8.0-windows"
+      ],
+      "sources": {
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net8.0-windows7.0": {
+          "targetAlias": "net8.0-windows",
+          "projectReferences": {
+            "C:\\Users\\Araceli\\Desktop\\github\\FIchajeDeEmpresa\\FichajeDeEmpresa.Shared\\FichajeDeEmpresa.Shared.csproj": {
+              "projectPath": "C:\\Users\\Araceli\\Desktop\\github\\FIchajeDeEmpresa\\FichajeDeEmpresa.Shared\\FichajeDeEmpresa.Shared.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      }
+    },
+    "frameworks": {
+      "net8.0-windows7.0": {
+        "targetAlias": "net8.0-windows",
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          },
+          "Microsoft.WindowsDesktop.App.WPF": {
+            "privateAssets": "none"
+          }
+        },
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.419/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  }
+}

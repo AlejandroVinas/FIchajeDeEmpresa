@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v8.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v8.0": {
+      "FichajeDeEmpresa.App/1.0.0": {
+        "dependencies": {
+          "FichajeDeEmpresa.Shared": "1.0.0"
+        },
+        "runtime": {
+          "FichajeDeEmpresa.App.dll": {}
+        }
+      },
+      "FichajeDeEmpresa.Shared/1.0.0": {
+        "runtime": {
+          "FichajeDeEmpresa.Shared.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "FichajeDeEmpresa.App/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "FichajeDeEmpresa.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
