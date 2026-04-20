@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\FichajeDeEmpresa.Api.props" />
-</Project>
