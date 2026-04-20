@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- FICHERO PARCIAL — añade estas claves dentro del <dict> de tu Info.plist   -->
+<!-- Ruta: ios/Runner/Info.plist                                                 -->
+<plist version="1.0">
+<dict>
+    <!-- Permiso de ubicación en uso -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>La app necesita tu ubicación para verificar que estás en la empresa antes de fichar.</string>
+
+    <!-- Permiso de ubicación siempre (iOS requiere ambos si se declara el segundo) -->
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>La app necesita tu ubicación para verificar que estás en la empresa antes de fichar.</string>
+
+    <!-- El resto de claves las genera Flutter automáticamente -->
+</dict>
+</plist>
