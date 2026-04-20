@@ -140,5 +140,3 @@ Desde la raíz del proyecto ejecutar:
 
 ```powershell
 dotnet build .\FIchajeDeEmpresa.sln
-
-asd
