@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Informe Técnico — Sistema de Fichaje V1 → V2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F7F6F3;
+    --surface:   #FFFFFF;
+    --border:    #E8E5DF;
+    --navy:      #0F1B2D;
+    --navy-mid:  #1E3A5F;
+    --text:      #1A1A1A;
+    --muted:     #6B6B6B;
+    --accent:    #D4440F;
+    --gold:      #C49A2B;
+    --green:     #1A6B3A;
+    --green-bg:  #EAF5EE;
+    --red:       #C0241A;
+    --red-bg:    #FDF0EF;
+    --orange:    #C56A00;
+    --orange-bg: #FFF4E6;
+    --blue:      #1A4B8C;
+    --blue-bg:   #EBF2FF;
+    --yellow-bg: #FFFBEA;
+    --shadow:    0 2px 16px rgba(15,27,45,.07);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── COVER ── */
+  .cover {
+    background: var(--navy);
+    color: white;
+    padding: 80px 60px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -120px; right: -120px;
+    width: 500px; height: 500px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,68,15,.25) 0%, transparent 70%);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -80px; left: 40%;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(30,58,95,.6) 0%, transparent 70%);
+  }
+  .cover-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    position: relative; z-index: 1;
+  }
+  .cover h1 span { color: var(--accent); }
+  .cover-sub {
+    font-size: 17px;
+    color: rgba(255,255,255,.65);
+    font-weight: 300;
+    max-width: 520px;
+    margin-bottom: 48px;
+    position: relative; z-index: 1;
+  }
+  .cover-meta {
+    display: flex;
+    gap: 48px;
+    flex-wrap: wrap;
+    position: relative; z-index: 1;
+    border-top: 1px solid rgba(255,255,255,.12);
+    padding-top: 32px;
+  }
+  .cover-meta-item { }
+  .cover-meta-item .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.4);
+    margin-bottom: 4px;
+  }
+  .cover-meta-item .value {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,.85);
+  }
+
+  /* ── SCORES BAR ── */
+  .scores-bar {
+    background: var(--navy-mid);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+  .score-cell {
+    padding: 28px 32px;
+    border-right: 1px solid rgba(255,255,255,.08);
+    transition: background .2s;
+  }
+  .score-cell:last-child { border-right: none; }
+  .score-cell:hover { background: rgba(255,255,255,.04); }
+  .score-cell .dim {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.4);
+    margin-bottom: 8px;
+  }
+  .score-cell .num {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .score-cell .bar {
+    height: 3px;
+    background: rgba(255,255,255,.12);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .score-cell .bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 1s ease;
+  }
+  .col-red    { color: #FF6B5B; }
+  .col-orange { color: #FFB347; }
+  .col-gold   { color: #FFD060; }
+  .col-green  { color: #6BDE9F; }
+  .fill-red    { background: #FF6B5B; }
+  .fill-orange { background: #FFB347; }
+  .fill-gold   { background: #FFD060; }
+  .fill-green  { background: #6BDE9F; }
+
+  /* ── LAYOUT ── */
+  .wrapper {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 60px 40px;
+  }
+  @media (max-width: 700px) { .wrapper { padding: 40px 20px; } }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 72px; }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid var(--border);
+  }
+  .section-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: .1em;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  /* ── CARDS ── */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    box-shadow: var(--shadow);
+  }
+  .card-icon { font-size: 22px; margin-bottom: 12px; }
+  .card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--navy);
+  }
+  .card p {
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* ── ISSUES TABLE ── */
+  .issues { display: flex; flex-direction: column; gap: 12px; }
+  .issue {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 16px;
+    align-items: start;
+    box-shadow: var(--shadow);
+  }
+  .issue-left { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .badge {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 3px 9px;
+    border-radius: 4px;
+  }
+  .badge-critical { background: var(--red-bg);    color: var(--red);    border: 1px solid #F5C6C4; }
+  .badge-high     { background: var(--orange-bg); color: var(--orange); border: 1px solid #FAD9B0; }
+  .badge-medium   { background: var(--yellow-bg); color: #7A5C00;       border: 1px solid #EDD87A; }
+  .badge-low      { background: var(--blue-bg);   color: var(--blue);   border: 1px solid #B8D0F5; }
+  .badge-info     { background: var(--green-bg);  color: var(--green);  border: 1px solid #B0DFC0; }
+
+  .issue-area {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: .05em;
+  }
+  .issue-right h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .issue-right p {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+  .fix {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: #F3F3F0;
+    border-left: 3px solid var(--accent);
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    color: #333;
+    line-height: 1.5;
+  }
+
+  /* ── FORTALEZAS ── */
+  .strengths {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+  }
+  .strength {
+    background: var(--green-bg);
+    border: 1px solid #B8DEC8;
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .strength-icon { font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .strength h4 {
+    font-family: 'Syne', sans-serif;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 4px;
+  }
+  .strength p { font-size: 12.5px; color: #3A7A52; line-height: 1.5; }
+
+  /* ── ROADMAP ── */
+  .roadmap { display: flex; flex-direction: column; gap: 0; }
+  .roadmap-phase {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0;
+  }
+  .phase-label {
+    padding: 28px 24px 28px 0;
+    border-right: 2px solid var(--border);
+    position: relative;
+  }
+  .phase-label::after {
+    content: '';
+    position: absolute;
+    right: -7px; top: 36px;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--surface);
+  }
+  .phase-q1 .phase-label::after { background: var(--accent); }
+  .phase-q2 .phase-label::after { background: var(--gold); }
+  .phase-q3 .phase-label::after { background: var(--blue); }
+
+  .phase-tag {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .phase-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .phase-items {
+    padding: 20px 0 20px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    box-shadow: var(--shadow);
+  }
+  .feature-card .f-icon { font-size: 20px; flex-shrink: 0; }
+  .feature-card .f-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .feature-card .f-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+  .feature-card .f-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .f-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .f-tag.backend  { background: #EEF2FF; color: #3B3F8C; border-color: #C5CCF5; }
+  .f-tag.frontend { background: #FFF4E6; color: #7A4500; border-color: #F5D0A0; }
+  .f-tag.flutter  { background: #E8F4FE; color: #1A5A8C; border-color: #A8CEED; }
+  .f-tag.seguridad{ background: #FDF0EF; color: var(--red); border-color: #F5C6C4; }
+
+  /* ── DEUDA TÉCNICA TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    background: var(--navy);
+    color: rgba(255,255,255,.8);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    text-align: left;
+    font-weight: 500;
+  }
+  tbody tr { background: var(--surface); }
+  tbody tr:nth-child(even) { background: #FAFAF8; }
+  tbody tr:hover { background: var(--blue-bg); }
+  tbody td {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  td.bold { font-weight: 600; color: var(--navy); font-size: 13px; }
+
+  .pill {
+    display: inline-block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-weight: 500;
+  }
+  .pill-alta   { background: #FDF0EF; color: var(--red); }
+  .pill-media  { background: var(--orange-bg); color: var(--orange); }
+  .pill-baja   { background: var(--blue-bg); color: var(--blue); }
+
+  .effort-dot {
+    display: inline-flex;
+    gap: 3px;
+    align-items: center;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+  }
+  .dot.on { background: var(--navy); }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--navy);
+    color: rgba(255,255,255,.4);
+    text-align: center;
+    padding: 32px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+  }
+
+  /* ── INTRO BOX ── */
+  .intro-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 24px 28px;
+    margin-bottom: 40px;
+    font-size: 15px;
+    color: var(--muted);
+    line-height: 1.8;
+    box-shadow: var(--shadow);
+  }
+  .intro-box strong { color: var(--navy); font-weight: 600; }
+
+  /* ── NAV ── */
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 56px;
+    box-shadow: var(--shadow);
+  }
+  .toc-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .toc-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 6px;
+    list-style: none;
+  }
+  .toc-list li a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--navy);
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: background .15s;
+    font-weight: 500;
+  }
+  .toc-list li a:hover { background: var(--bg); }
+  .toc-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    min-width: 22px;
+  }
+
+  @media print {
+    .cover { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .scores-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<div class="cover">
+  <div class="cover-label">Informe Técnico · Sistema de Fichaje · 2025</div>
+  <h1>Estado del Proyecto<br><span>V1 → Hoja de Ruta V2</span></h1>
+  <p class="cover-sub">Análisis de seguridad, arquitectura y funcionalidades con propuestas priorizadas para la siguiente versión.</p>
+  <div class="cover-meta">
+    <div class="cover-meta-item">
+      <div class="label">Stack</div>
+      <div class="value">Node.js · Express · SQLite · Flutter</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Escala objetivo V2</div>
+      <div class="value">Menos de 50 empleados</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Dimensiones evaluadas</div>
+      <div class="value">Seguridad · Arquitectura · UX</div>
+    </div>
+    <div class="cover-meta-item">
+      <div class="label">Versión del informe</div>
+      <div class="value">1.0 · Junio 2025</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCORES -->
+<div class="scores-bar">
+  <div class="score-cell">
+    <div class="dim">Seguridad</div>
+    <div class="num col-orange">4.5<span style="font-size:18px;opacity:.5">/10</span></div>
+    <div class="bar"><div class="bar-fill fill-orange" style="width:45%"></div></div>
+  </div>
+  <div class="score-cell">
+    <div class="dim">Arquitectura</div>
+    <div class="num col-gold">6.5<span style="font-size:18px;opacity:.5">/10</span></div>
+    <div class="bar"><div class="bar-fill fill-gold" style="width:65%"></div></div>
+  </div>
+  <div class="score-cell">
+    <div class="dim">Funcionalidades</div>
+    <div class="num col-gold">5.5<span style="font-size:18px;opacity:.5">/10</span></div>
+    <div class="bar"><div class="bar-fill fill-gold" style="width:55%"></div></div>
+  </div>
+  <div class="score-cell">
+    <div class="dim">Calidad de código</div>
+    <div class="num col-green">7.0<span style="font-size:18px;opacity:.5">/10</span></div>
+    <div class="bar"><div class="bar-fill fill-green" style="width:70%"></div></div>
+  </div>
+  <div class="score-cell">
+    <div class="dim">Madurez global</div>
+    <div class="num col-gold">5.8<span style="font-size:18px;opacity:.5">/10</span></div>
+    <div class="bar"><div class="bar-fill fill-gold" style="width:58%"></div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="wrapper">
+
+  <!-- INTRO -->
+  <div class="intro-box">
+    Este informe evalúa el estado actual del sistema de fichaje por ubicación (V1) con el objetivo de
+    <strong>planificar una V2 sólida y segura</strong>. El proyecto presenta una base técnica bien estructurada
+    con separación limpia de responsabilidades, pero acumula varias vulnerabilidades de seguridad relevantes
+    y carece de funcionalidades clave para el usuario final. A escala de <strong>menos de 50 empleados</strong>,
+    el stack actual (SQLite, Express, Flutter) es completamente válido y no requiere cambios de infraestructura.
+  </div>
+
+  <!-- TOC -->
+  <div class="toc">
+    <div class="toc-title">Índice de secciones</div>
+    <ul class="toc-list">
+      <li><a href="#fortalezas"><span class="toc-num">01</span> Fortalezas de V1</a></li>
+      <li><a href="#seguridad"><span class="toc-num">02</span> Análisis de seguridad</a></li>
+      <li><a href="#arquitectura"><span class="toc-num">03</span> Arquitectura y código</a></li>
+      <li><a href="#ux"><span class="toc-num">04</span> UX y funcionalidades</a></li>
+      <li><a href="#roadmap"><span class="toc-num">05</span> Roadmap V2</a></li>
+      <li><a href="#deuda"><span class="toc-num">06</span> Backlog de deuda técnica</a></li>
+    </ul>
+  </div>
+
+  <!-- ── 01 FORTALEZAS ── -->
+  <div class="section" id="fortalezas">
+    <div class="section-header">
+      <span class="section-num">01</span>
+      <h2 class="section-title">Fortalezas de V1</h2>
+    </div>
+    <p style="color:var(--muted);margin-bottom:24px;font-size:14px">Lo que V1 hace bien y debe preservarse en V2.</p>
+    <div class="strengths">
+      <div class="strength">
+        <div class="strength-icon">🔐</div>
+        <div>
+          <h4>Firma criptográfica Ed25519</h4>
+          <p>Cada fichaje se firma en el dispositivo antes de enviarse. El backend verifica la firma. Esto garantiza no-repudio y previene la manipulación del fichaje en tránsito.</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">📐</div>
+        <div>
+          <h4>Separación de responsabilidades</h4>
+          <p>Backend, app móvil y panel admin son módulos independientes con contratos claros (API REST). El código de cada módulo es fácil de leer y modificar de forma aislada.</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">🌍</div>
+        <div>
+          <h4>Doble verificación GPS</h4>
+          <p>La ubicación se comprueba tanto en el cliente (mejor UX) como en el servidor (seguridad real). El algoritmo Haversine está correctamente implementado en ambos lados.</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">⏱️</div>
+        <div>
+          <h4>Protección anti-replay</h4>
+          <p>El backend valida que el timestamp del fichaje esté dentro de ±5 minutos de la hora real del servidor, impidiendo el reenvío de requests interceptados.</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">🐳</div>
+        <div>
+          <h4>Docker listo para producción</h4>
+          <p>Multi-stage build correcto, volumen persistente para la BD, variables de entorno por .env. El despliegue es reproducible desde el primer día.</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">📱</div>
+        <div>
+          <h4>Cobertura multiplataforma</h4>
+          <p>Flutter compila a Android, iOS, Windows y Linux desde el mismo código. El modo escritorio (verificación por IP) está correctamente diferenciado del móvil (GPS).</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">🔔</div>
+        <div>
+          <h4>Notificaciones push en tiempo real</h4>
+          <p>El sistema VAPID/Web Push está integrado y funcional. Las suscripciones caducadas se limpian automáticamente. El admin recibe alertas instantáneas de fichajes.</p>
+        </div>
+      </div>
+      <div class="strength">
+        <div class="strength-icon">📊</div>
+        <div>
+          <h4>Panel admin completo</h4>
+          <p>Filtros combinados, paginación configurable, exportación CSV con BOM Unicode, indicador visual de firma válida/inválida. Cubre el flujo administrativo básico.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 02 SEGURIDAD ── -->
+  <div class="section" id="seguridad">
+    <div class="section-header">
+      <span class="section-num">02</span>
+      <h2 class="section-title">Análisis de seguridad</h2>
+    </div>
+    <p style="color:var(--muted);margin-bottom:24px;font-size:14px">10 hallazgos ordenados por severidad. Los marcados como <strong>Crítico / Alto</strong> deben resolverse antes de ir a producción real.</p>
+
+    <div class="issues">
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-critical">Crítico</span>
+          <span class="issue-area">admin_panel</span>
+        </div>
+        <div class="issue-right">
+          <h4>JWT almacenado en localStorage — vulnerable a XSS</h4>
+          <p><code>localStorage.getItem('token')</code> es accesible por cualquier script JS en la misma página. Si un atacante inyecta código en el panel, obtiene el token de admin sin fricción.</p>
+          <div class="fix">→ Migrar a cookie httpOnly + SameSite=Strict. El backend envía la cookie en el login y el panel no necesita gestionar el token manualmente.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-high">Alto</span>
+          <span class="issue-area">server.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>CORS completamente abierto — acepta cualquier origen</h4>
+          <p><code>app.use(cors())</code> sin configuración permite peticiones desde cualquier dominio. Un atacante puede construir una página que haga peticiones autenticadas al backend.</p>
+          <div class="fix">→ app.use(cors({ origin: ['https://mipanel.empresa.com'], credentials: true }))</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-high">Alto</span>
+          <span class="issue-area">routes/auth.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>Sin rate limiting — ataque de fuerza bruta posible</h4>
+          <p>El endpoint <code>POST /auth/login</code> no tiene ningún límite de intentos. Un atacante puede probar miles de contraseñas por segundo contra cualquier cuenta.</p>
+          <div class="fix">→ npm install express-rate-limit — aplicar límite de 10 intentos / 15 min por IP en /auth/login.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-high">Alto</span>
+          <span class="issue-area">utils/ip.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>X-Forwarded-For aceptado sin validación — IP spoofing</h4>
+          <p>La función <code>getClientIp()</code> confía ciegamente en el header <code>x-forwarded-for</code>. Si el backend no está detrás de un proxy de confianza, cualquier cliente puede falsificar su IP y fichar como si estuviera en la oficina.</p>
+          <div class="fix">→ Configurar express: app.set('trust proxy', 1) — solo confiar en el primer proxy. Sin proxy, eliminar la lectura de x-forwarded-for.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-medium">Medio</span>
+          <span class="issue-area">seed.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>Credenciales de admin por defecto hardcodeadas</h4>
+          <p><code>admin@empresa.com</code> / <code>admin1234</code> son las credenciales del primer admin. Es fácil olvidar cambiarlas antes de un despliegue real, especialmente en entornos CI/CD.</p>
+          <div class="fix">→ Leer email y password desde variables de entorno en seed.js. Rechazar arranque si las variables no están definidas.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-medium">Medio</span>
+          <span class="issue-area">routes/push.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>Búsqueda de push subscription con LIKE sobre datos JSON</h4>
+          <p><code>WHERE datos LIKE '%${endpoint}%'</code> es frágil: si el endpoint contiene caracteres especiales de SQLite LIKE (<code>%</code>, <code>_</code>), la búsqueda falla o da falsos positivos.</p>
+          <div class="fix">→ Añadir columna endpoint TEXT UNIQUE a push_suscripciones. Buscar por esa columna exacta en lugar de LIKE sobre el JSON.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-medium">Medio</span>
+          <span class="issue-area">config.dart</span>
+        </div>
+        <div class="issue-right">
+          <h4>URL del backend hardcodeada en el código fuente</h4>
+          <p><code>http://192.168.1.100:3000</code> está en el código compilado. Cambiar el servidor implica recompilar y redistribuir la app. Además, usa HTTP plano en lugar de HTTPS.</p>
+          <div class="fix">→ Usar --dart-define=API_URL=... en build. En producción, forzar HTTPS. Validar que la URL no sea la IP de desarrollo.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-low">Bajo</span>
+          <span class="issue-area">routes/auth.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>Sin mecanismo de refresh token</h4>
+          <p>El JWT dura 8 horas y no puede renovarse. Si un empleado trabaja un turno largo o la app queda abierta, al expirar hay un logout abrupto sin aviso previo.</p>
+          <div class="fix">→ Emitir un refresh token de larga duración (httpOnly cookie). Añadir POST /auth/refresh para renovar el access token silenciosamente.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-low">Bajo</span>
+          <span class="issue-area">routes/empleados.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>Eliminar empleado no elimina sus fichajes (datos huérfanos)</h4>
+          <p><code>DELETE FROM empleados WHERE id = ?</code> no borra los fichajes asociados. La clave foránea no tiene ON DELETE CASCADE, por lo que los fichajes quedan sin empleado referenciado.</p>
+          <div class="fix">→ Añadir ON DELETE CASCADE en la FK de fichajes, o implementar soft-delete (campo activo=0) para preservar historial con fines legales.</div>
+        </div>
+      </div>
+
+      <div class="issue">
+        <div class="issue-left">
+          <span class="badge badge-info">Info</span>
+          <span class="issue-area">server.js</span>
+        </div>
+        <div class="issue-right">
+          <h4>Sin middleware global de manejo de errores</h4>
+          <p>Si un handler de Express lanza una excepción no capturada, Express devuelve un HTML de error por defecto que puede exponer rutas internas o el stack trace.</p>
+          <div class="fix">→ Añadir al final: app.use((err, req, res, next) =&gt; res.status(500).json({ error: 'Error interno' }))</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 03 ARQUITECTURA ── -->
+  <div class="section" id="arquitectura">
+    <div class="section-header">
+      <span class="section-num">03</span>
+      <h2 class="section-title">Arquitectura y calidad de código</h2>
+    </div>
+    <p style="color:var(--muted);margin-bottom:24px;font-size:14px">El código es limpio y legible pero acumula deuda en testabilidad, observabilidad y mantenibilidad.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">🧪</div>
+        <h3>Sin tests (cero cobertura)</h3>
+        <p>No hay ningún fichero de test en el proyecto. Las funciones críticas como <code>verificarFirma()</code>, <code>estaEnEmpresa()</code> o los endpoints de fichaje no tienen cobertura automatizada. Cualquier refactor de V2 es un cambio a ciegas.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h3>Sin logging estructurado</h3>
+        <p>Solo hay <code>console.log</code> y <code>console.error</code>. En producción esto dificulta el diagnóstico de errores, imposibilita alertas automatizadas y no hay rastro de quién hizo qué. Se recomienda <strong>pino</strong> o <strong>winston</strong>.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h3>Migraciones sin versionado</h3>
+        <p>El sistema de migraciones es un array de <code>ALTER TABLE</code> dentro de un <code>try/catch</code>. Funciona pero no registra qué migraciones se han ejecutado. Al añadir más columnas en V2 esto se volverá frágil. Considerar <strong>better-sqlite3-migrate</strong>.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">⚙️</div>
+        <h3>config.dart duplica el backend</h3>
+        <p><code>empresaLat</code>, <code>empresaLon</code> y <code>radioMetros</code> deben estar sincronizados manualmente entre <code>.env</code> del backend y <code>config.dart</code> de Flutter. Una deriva entre ambos provoca inconsistencias silenciosas.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📡</div>
+        <h3>Sin versionado de API</h3>
+        <p>Las rutas son <code>/auth/login</code> en lugar de <code>/v1/auth/login</code>. En V2, si se rompe la compatibilidad con la app V1 instalada en dispositivos, no hay forma de distinguir qué versión llama a qué endpoint.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📄</div>
+        <h3>Sin documentación de API</h3>
+        <p>El README incluye una tabla básica pero no hay especificación OpenAPI/Swagger. Dificulta la incorporación de nuevos desarrolladores y la generación automática de clientes HTTP.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 04 UX ── -->
+  <div class="section" id="ux">
+    <div class="section-header">
+      <span class="section-num">04</span>
+      <h2 class="section-title">UX y funcionalidades — Brechas actuales</h2>
+    </div>
+    <p style="color:var(--muted);margin-bottom:24px;font-size:14px">Lo que los usuarios esperan y V1 no cubre.</p>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-icon">📅</div>
+        <h3>El empleado no ve su propio historial</h3>
+        <p>La app solo permite fichar. El empleado no puede consultar sus entradas y salidas, horas trabajadas ni descargar su propio registro. Genera dependencia del administrador para cualquier consulta.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🟢</div>
+        <h3>Sin dashboard de presencia en tiempo real</h3>
+        <p>El admin no puede ver de un vistazo quién está dentro de la empresa en este momento. Tiene que filtrar la tabla de fichajes manualmente para inferir el estado actual.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">✏️</div>
+        <h3>Sin corrección manual de fichajes</h3>
+        <p>Si un empleado olvida fichar o hay un error de GPS, el admin no puede insertar ni corregir un fichaje. No existe ningún flujo de justificación o edición manual.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏠</div>
+        <h3>Solo entrada/salida — sin tipos de ausencia</h3>
+        <p>No hay forma de registrar vacaciones, bajas, teletrabajo o días de asunto propio. El sistema no puede distinguir entre "no fichó porque faltó" y "no fichó porque trabajó desde casa".</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔑</div>
+        <h3>Intercambio de clave pública manual y frágil</h3>
+        <p>El empleado copia 44 caracteres base64 de la app y se los pasa al admin, que los pega en un campo de texto. Es propenso a errores, no hay validación visual y no existe flujo de cambio de dispositivo automatizado.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📊</div>
+        <h3>Sin estadísticas ni informes de horas</h3>
+        <p>No hay cálculo de horas trabajadas por día/semana/mes, resumen de puntualidad ni exportación en formato compatible con software de RRHH. Solo existe la exportación CSV básica.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔒</div>
+        <h3>Sin recuperación de contraseña</h3>
+        <p>Si un empleado olvida su contraseña, solo el admin puede resetearla manualmente. No hay flujo de email de recuperación.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📱</div>
+        <h3>Panel admin no optimizado para móvil</h3>
+        <p>El panel HTML tiene un layout de tabla que no es usable en pantallas pequeñas. Un admin gestionando desde el móvil tiene una experiencia degradada.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 05 ROADMAP ── -->
+  <div class="section" id="roadmap">
+    <div class="section-header">
+      <span class="section-num">05</span>
+      <h2 class="section-title">Roadmap V2 — Funcionalidades propuestas</h2>
+    </div>
+    <p style="color:var(--muted);margin-bottom:32px;font-size:14px">Ordenadas por impacto real para el usuario. Las etiquetas indican qué capa del sistema requiere trabajo.</p>
+
+    <div class="roadmap">
+
+      <!-- FASE 1 -->
+      <div class="roadmap-phase phase-q1">
+        <div class="phase-label">
+          <div class="phase-tag">Fase 1</div>
+          <div class="phase-sub">Seguridad y base</div>
+        </div>
+        <div class="phase-items">
+
+          <div class="feature-card">
+            <div class="f-icon">🍪</div>
+            <div>
+              <div class="f-title">Migración de JWT a cookie httpOnly</div>
+              <div class="f-desc">Eliminar la vulnerabilidad XSS del panel admin. El token viaja en cookie segura y no es accesible desde JavaScript. Incluye implementación de refresh token silencioso.</div>
+              <div class="f-tags">
+                <span class="f-tag backend">backend</span>
+                <span class="f-tag frontend">admin panel</span>
+                <span class="f-tag seguridad">seguridad crítica</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">🛡️</div>
+            <div>
+              <div class="f-title">Rate limiting + CORS restringido</div>
+              <div class="f-desc">Protección de fuerza bruta en login (10 intentos/15 min por IP) y lista blanca de orígenes CORS. Configuración desde variables de entorno.</div>
+              <div class="f-tags">
+                <span class="f-tag backend">backend</span>
+                <span class="f-tag seguridad">seguridad alta</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">📋</div>
+            <div>
+              <div class="f-title">Logging estructurado + gestión de errores global</div>
+              <div class="f-desc">Integrar pino para logs en JSON. Añadir middleware global de errores en Express. Los logs incluyen empleado_id, endpoint, IP y duración de cada request.</div>
+              <div class="f-tags">
+                <span class="f-tag backend">backend</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FASE 2 -->
+      <div class="roadmap-phase phase-q2">
+        <div class="phase-label">
+          <div class="phase-tag">Fase 2</div>
+          <div class="phase-sub">Autoservicio empleado</div>
+        </div>
+        <div class="phase-items">
+
+          <div class="feature-card">
+            <div class="f-icon">📅</div>
+            <div>
+              <div class="f-title">Historial personal en la app Flutter</div>
+              <div class="f-desc">Nueva pantalla en la app donde el empleado ve sus fichajes del mes con horas trabajadas calculadas, filtro por semana y exportación PDF personal. Nuevo endpoint GET /fichajes/mios.</div>
+              <div class="f-tags">
+                <span class="f-tag flutter">flutter</span>
+                <span class="f-tag backend">backend</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">🔐</div>
+            <div>
+              <div class="f-title">Intercambio de clave pública automatizado</div>
+              <div class="f-desc">Tras el primer login, la app envía automáticamente su clave pública al backend si el empleado aún no tiene una. El admin recibe notificación push y la aprueba con un solo clic.</div>
+              <div class="f-tags">
+                <span class="f-tag flutter">flutter</span>
+                <span class="f-tag backend">backend</span>
+                <span class="f-tag frontend">admin panel</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">🔑</div>
+            <div>
+              <div class="f-title">Recuperación de contraseña por email</div>
+              <div class="f-desc">Flujo estándar: solicitar reset → email con enlace firmado (JWT de un solo uso, 30 min) → formulario de nueva contraseña. Requiere integración con proveedor SMTP (nodemailer + SendGrid/Resend).</div>
+              <div class="f-tags">
+                <span class="f-tag backend">backend</span>
+                <span class="f-tag flutter">flutter</span>
+                <span class="f-tag frontend">admin panel</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- FASE 3 -->
+      <div class="roadmap-phase phase-q3">
+        <div class="phase-label">
+          <div class="phase-tag">Fase 3</div>
+          <div class="phase-sub">Gestión avanzada</div>
+        </div>
+        <div class="phase-items">
+
+          <div class="feature-card">
+            <div class="f-icon">🟢</div>
+            <div>
+              <div class="f-title">Dashboard de presencia en tiempo real</div>
+              <div class="f-desc">Sección en el panel admin con tarjetas de empleados mostrando si están "dentro", "fuera" o "sin actividad hoy". Se actualiza vía push notification al recibir fichajes. Incluye contador de asistencia diaria.</div>
+              <div class="f-tags">
+                <span class="f-tag frontend">admin panel</span>
+                <span class="f-tag backend">backend</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">✏️</div>
+            <div>
+              <div class="f-title">Corrección y inserción manual de fichajes</div>
+              <div class="f-desc">El admin puede añadir fichajes pasados (empleado olvidó fichar) o corregir hora/tipo. Cada corrección queda registrada con quién la hizo y cuándo (campo corregido_por en la BD).</div>
+              <div class="f-tags">
+                <span class="f-tag frontend">admin panel</span>
+                <span class="f-tag backend">backend</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">🏠</div>
+            <div>
+              <div class="f-title">Tipos de ausencia y teletrabajo</div>
+              <div class="f-desc">Nuevos tipos de registro: vacaciones, baja médica, teletrabajo, asunto propio. El empleado solicita desde la app; el admin aprueba. Los informes de horas los excluyen o incluyen según configuración.</div>
+              <div class="f-tags">
+                <span class="f-tag flutter">flutter</span>
+                <span class="f-tag backend">backend</span>
+                <span class="f-tag frontend">admin panel</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">📊</div>
+            <div>
+              <div class="f-title">Informes de horas trabajadas</div>
+              <div class="f-desc">Cálculo automático de horas por empleado/semana/mes. Identificación de días con entrada pero sin salida. Exportación en Excel (.xlsx) con formato compatible con nóminas. Gráficas de asistencia en el panel.</div>
+              <div class="f-tags">
+                <span class="f-tag frontend">admin panel</span>
+                <span class="f-tag backend">backend</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-card">
+            <div class="f-icon">🏢</div>
+            <div>
+              <div class="f-title">Soporte de múltiples sedes</div>
+              <div class="f-desc">Tabla de sedes con nombre, coordenadas GPS y radio configurables. Cada empleado se asigna a una sede. El fichaje valida contra la sede del empleado, no una coordenada global.</div>
+              <div class="f-tags">
+                <span class="f-tag backend">backend</span>
+                <span class="f-tag frontend">admin panel</span>
+                <span class="f-tag flutter">flutter</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── 06 DEUDA TÉCNICA ── -->
+  <div class="section" id="deuda">
+    <div class="section-header">
+      <span class="section-num">06</span>
+      <h2 class="section-title">Backlog de deuda técnica</h2>
+    </div>
+    <p style="color:var(--muted);margin-bottom:24px;font-size:14px">Tabla de tareas concretas ordenadas por prioridad. Las de prioridad Alta deben cerrarse antes de cualquier despliegue en producción real.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Tarea</th>
+            <th>Fichero</th>
+            <th>Prioridad</th>
+            <th>Esfuerzo</th>
+            <th>Categoría</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="mono">T-01</td>
+            <td class="bold">Migrar JWT de localStorage a cookie httpOnly</td>
+            <td class="mono">admin_panel/index.html · routes/auth.js</td>
+            <td><span class="pill pill-alta">Alta</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span></td>
+            <td>Seguridad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-02</td>
+            <td class="bold">Añadir express-rate-limit en /auth/login</td>
+            <td class="mono">routes/auth.js</td>
+            <td><span class="pill pill-alta">Alta</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+            <td>Seguridad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-03</td>
+            <td class="bold">Configurar CORS con origen explícito</td>
+            <td class="mono">server.js</td>
+            <td><span class="pill pill-alta">Alta</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+            <td>Seguridad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-04</td>
+            <td class="bold">Corregir trust proxy para X-Forwarded-For</td>
+            <td class="mono">server.js · utils/ip.js</td>
+            <td><span class="pill pill-alta">Alta</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+            <td>Seguridad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-05</td>
+            <td class="bold">Leer credenciales de seed desde .env</td>
+            <td class="mono">seed.js</td>
+            <td><span class="pill pill-alta">Alta</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+            <td>Seguridad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-06</td>
+            <td class="bold">Añadir middleware global de errores en Express</td>
+            <td class="mono">server.js</td>
+            <td><span class="pill pill-alta">Alta</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+            <td>Arquitectura</td>
+          </tr>
+          <tr>
+            <td class="mono">T-07</td>
+            <td class="bold">Integrar pino para logging estructurado</td>
+            <td class="mono">server.js · routes/*</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Observabilidad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-08</td>
+            <td class="bold">Añadir columna endpoint a push_suscripciones</td>
+            <td class="mono">db.js · routes/push.js</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Seguridad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-09</td>
+            <td class="bold">Soft-delete en empleados (campo activo)</td>
+            <td class="mono">db.js · routes/empleados.js</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Arquitectura</td>
+          </tr>
+          <tr>
+            <td class="mono">T-10</td>
+            <td class="bold">Versionar API con prefijo /v1/</td>
+            <td class="mono">server.js · config.dart</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Arquitectura</td>
+          </tr>
+          <tr>
+            <td class="mono">T-11</td>
+            <td class="bold">Tests unitarios para verificarFirma y estaEnEmpresa</td>
+            <td class="mono">utils/firma.js · utils/geo.js</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Calidad</td>
+          </tr>
+          <tr>
+            <td class="mono">T-12</td>
+            <td class="bold">Sistema de migraciones con versionado (better-sqlite3-migrate)</td>
+            <td class="mono">db.js</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Arquitectura</td>
+          </tr>
+          <tr>
+            <td class="mono">T-13</td>
+            <td class="bold">Externalizar config de Flutter via --dart-define</td>
+            <td class="mono">lib/config.dart</td>
+            <td><span class="pill pill-media">Media</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span></td>
+            <td>DevOps</td>
+          </tr>
+          <tr>
+            <td class="mono">T-14</td>
+            <td class="bold">Generar especificación OpenAPI del backend</td>
+            <td class="mono">server.js · routes/*</td>
+            <td><span class="pill pill-baja">Baja</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span></td>
+            <td>Documentación</td>
+          </tr>
+          <tr>
+            <td class="mono">T-15</td>
+            <td class="bold">Refresh token con cookie httpOnly de larga duración</td>
+            <td class="mono">routes/auth.js</td>
+            <td><span class="pill pill-baja">Baja</span></td>
+            <td><span class="effort-dot"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span></td>
+            <td>UX · Seguridad</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="margin-top:20px;font-size:12.5px;color:var(--muted);display:flex;gap:24px;flex-wrap:wrap">
+      <span><strong>Esfuerzo:</strong></span>
+      <span><span class="effort-dot" style="display:inline-flex"><span class="dot on"></span><span class="dot"></span><span class="dot"></span></span> 1-2h</span>
+      <span><span class="effort-dot" style="display:inline-flex"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span> Medio día</span>
+      <span><span class="effort-dot" style="display:inline-flex"><span class="dot on"></span><span class="dot on"></span><span class="dot on"></span></span> 1-2 días</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Sistema de Fichaje · Informe V1 → V2 · Generado el 2025 · Solo para uso interno
+</div>
+
+</body>
+</html>
