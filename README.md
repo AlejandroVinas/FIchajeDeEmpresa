@@ -9,7 +9,8 @@ El objetivo es construir una app de Windows donde cada trabajador pueda:
 - iniciar sesión
 - fichar entrada
 - fichar salida
-- ver sus horas trabajadas
+- ver su estado actual
+- ver su tiempo trabajado del día
 - ver sus horas normales y horas extra
 
 Además, el sistema tendrá una parte administrativa para gestionar usuarios, revisar fichajes y resolver incidencias.
@@ -23,6 +24,7 @@ Hemos decidido usar una arquitectura cliente-servidor dentro de la empresa.
 Cada trabajador tendrá instalada una app de escritorio en su equipo.
 
 Tecnología:
+
 - WPF
 - C#
 - .NET 8
@@ -32,12 +34,14 @@ Tecnología:
 Habrá un equipo dentro de la empresa que actuará como servidor.
 
 Ese equipo alojará:
+
 - una API en ASP.NET Core
-- la base de datos central
+- la base de datos central más adelante
 
 Tecnología:
+
 - ASP.NET Core Web API
-- SQL Server (más adelante)
+- SQL Server más adelante
 
 ### Proyecto compartido
 
@@ -67,15 +71,22 @@ Actualmente el proyecto ya tiene funcionando lo siguiente:
 - app WPF compilando correctamente
 - API compilando correctamente
 - comunicación entre la app y la API
-- pantalla de login
+- pantalla de login separada
+- pantalla principal después del login
 - autenticación de prueba en memoria
-- usuarios de prueba para validar el flujo
+- fichaje de entrada
+- fichaje de salida
+- estado actual del usuario
+- resumen del día
+- cálculo de horas trabajadas
+- cálculo de horas normales
+- cálculo de horas extra
 
-### Importante
+## Importante
 
 En este momento **todavía no estamos usando base de datos real**.
 
-El login actual funciona con usuarios de prueba cargados en memoria dentro de la API. Esto se ha hecho así para validar primero la arquitectura y la comunicación entre proyectos antes de pasar a SQL Server.
+Toda la información de usuarios y fichajes se está gestionando en memoria dentro de la API para validar primero el flujo completo antes de pasar a SQL Server.
 
 ## Usuarios de prueba actuales
 
@@ -98,18 +109,18 @@ Actualmente los usuarios de prueba tienen estas horas:
 - `juan` -> 8 horas/día
 - `maria` -> 4 horas/día
 
-Esto sirve para validar más adelante el cálculo de horas normales y horas extra.
-
 ## Flujo actual
 
 Ahora mismo el flujo es este:
 
 1. Se arranca la API
 2. Se arranca la app WPF
-3. El usuario introduce usuario y contraseña
-4. La app llama al endpoint de login de la API
-5. La API valida el usuario en memoria
-6. Si el login es correcto, la app muestra un mensaje con los datos del usuario
+3. El usuario inicia sesión
+4. Se abre la pantalla principal
+5. El usuario puede fichar entrada
+6. El usuario puede fichar salida
+7. La app muestra el estado actual y el resumen del día
+8. La API calcula tiempo trabajado, horas normales y horas extra
 
 ## Endpoints disponibles actualmente
 
@@ -120,6 +131,18 @@ Sirve para comprobar que la API está viva.
 ### `POST /api/auth/login`
 
 Recibe usuario y contraseña y devuelve el resultado del login.
+
+### `POST /api/fichajes/entrada`
+
+Registra la entrada del usuario.
+
+### `POST /api/fichajes/salida`
+
+Registra la salida del usuario.
+
+### `GET /api/fichajes/resumen-hoy/{userId}`
+
+Devuelve el resumen actual del día para el usuario indicado.
 
 ## Requisitos para desarrollo
 

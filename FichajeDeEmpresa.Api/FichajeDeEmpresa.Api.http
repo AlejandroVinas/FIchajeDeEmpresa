@@ -1,6 +1,60 @@
-@FichajeDeEmpresa.Api_HostAddress = http://localhost:5117
+@FichajeDeEmpresa.Api_HostAddress = http://localhost:5050
 
-GET {{FichajeDeEmpresa.Api_HostAddress}}/weatherforecast/
+### Health
+GET {{FichajeDeEmpresa.Api_HostAddress}}/api/health
 Accept: application/json
 
-###
+### Login correcto admin
+POST {{FichajeDeEmpresa.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "userName": "admin",
+  "password": "admin123"
+}
+
+### Login correcto juan
+POST {{FichajeDeEmpresa.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "userName": "juan",
+  "password": "1234"
+}
+
+### Login correcto maria
+POST {{FichajeDeEmpresa.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "userName": "maria",
+  "password": "1234"
+}
+
+### Fichar entrada admin
+POST {{FichajeDeEmpresa.Api_HostAddress}}/api/fichajes/entrada
+Content-Type: application/json
+
+{
+  "userId": 1
+}
+
+### Fichar salida admin
+POST {{FichajeDeEmpresa.Api_HostAddress}}/api/fichajes/salida
+Content-Type: application/json
+
+{
+  "userId": 1
+}
+
+### Resumen de hoy admin
+GET {{FichajeDeEmpresa.Api_HostAddress}}/api/fichajes/resumen-hoy/1
+Accept: application/json
+
+### Resumen de hoy juan
+GET {{FichajeDeEmpresa.Api_HostAddress}}/api/fichajes/resumen-hoy/2
+Accept: application/json
+
+### Resumen de hoy maria
+GET {{FichajeDeEmpresa.Api_HostAddress}}/api/fichajes/resumen-hoy/3
+Accept: application/json
