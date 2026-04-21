@@ -113,7 +113,14 @@ public partial class MainWindow : Window
             ? summary.LastExitTime.Value.ToString("dd/MM/yyyy HH:mm:ss")
             : "Todavía no hay salida registrada hoy.";
 
-        WorkedTodayValueTextBlock.Text = FormatWorkedTime(summary.WorkedSecondsToday);
+        var workedSecondsToday = summary.WorkedSecondsToday;
+        var expectedDailySeconds = GetExpectedDailySeconds();
+        var normalSecondsToday = Math.Min(workedSecondsToday, expectedDailySeconds);
+        var extraSecondsToday = Math.Max(0, workedSecondsToday - expectedDailySeconds);
+
+        WorkedTodayValueTextBlock.Text = FormatWorkedTime(workedSecondsToday);
+        NormalHoursValueTextBlock.Text = FormatWorkedTime(normalSecondsToday);
+        ExtraHoursValueTextBlock.Text = FormatWorkedTime(extraSecondsToday);
 
         MovementsListBox.ItemsSource = BuildMovementLines(summary);
 
@@ -133,6 +140,11 @@ public partial class MainWindow : Window
         return summary.Movements
             .Select(m => $"{m.Timestamp:HH:mm:ss} - {m.Type}")
             .ToList();
+    }
+
+    private int GetExpectedDailySeconds()
+    {
+        return (int)Math.Round(_loggedUser.ExpectedDailyHours * 3600);
     }
 
     private void SetBusyState(bool isBusy)

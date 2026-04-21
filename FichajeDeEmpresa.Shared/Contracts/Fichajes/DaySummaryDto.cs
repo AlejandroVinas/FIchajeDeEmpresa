@@ -12,5 +12,9 @@ public class DaySummaryDto
 
     public int WorkedSecondsToday { get; set; }
 
+    public int NormalSecondsToday { get; set; }
+
+    public int ExtraSecondsToday { get; set; }
+
     public List<FichajeMovementDto> Movements { get; set; } = [];
 }

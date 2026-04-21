@@ -5,10 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Fichaje de Empresa - Pantalla principal"
-        Height="700"
-        Width="1050"
-        MinHeight="700"
-        MinWidth="980"
+        Height="760"
+        Width="1100"
+        MinHeight="760"
+        MinWidth="1000"
         WindowStartupLocation="CenterScreen"
         Background="#F5F6FA">
 
@@ -35,7 +35,7 @@
                                FontWeight="Bold"
                                Margin="0,0,0,8" />
 
-                    <TextBlock Text="Ya estás dentro de la aplicación. Desde aquí vamos a gestionar el estado actual y los fichajes del día."
+                    <TextBlock Text="Ya estás dentro de la aplicación. Aquí puedes ver tu estado actual, registrar fichajes y consultar el resumen del día."
                                FontSize="14"
                                Foreground="#666666"
                                TextWrapping="Wrap" />
@@ -121,6 +121,20 @@
                         <TextBlock Text="Tiempo trabajado hoy"
                                    FontWeight="SemiBold" />
                         <TextBlock x:Name="WorkedTodayValueTextBlock"
+                                   Margin="0,6,0,12"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+
+                        <TextBlock Text="Horas normales de hoy"
+                                   FontWeight="SemiBold" />
+                        <TextBlock x:Name="NormalHoursValueTextBlock"
+                                   Margin="0,6,0,12"
+                                   FontSize="18"
+                                   FontWeight="SemiBold" />
+
+                        <TextBlock Text="Horas extra de hoy"
+                                   FontWeight="SemiBold" />
+                        <TextBlock x:Name="ExtraHoursValueTextBlock"
                                    Margin="0,6,0,0"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
