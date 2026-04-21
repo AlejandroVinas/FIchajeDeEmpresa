@@ -7,6 +7,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IAuthService, InMemoryAuthService>();
+builder.Services.AddSingleton<IFichajeService, InMemoryFichajeService>();
 
 var app = builder.Build();
 
@@ -16,7 +17,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// De momento lo dejamos simple para desarrollo local.
 app.UseAuthorization();
 
 app.MapControllers();
