@@ -4,80 +4,211 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Fichaje de Empresa - Login"
-        Height="420"
-        Width="520"
+        Title="HIFLUNECAN S.L. - Inicio de sesión"
+        Height="620"
+        Width="980"
+        MinHeight="620"
+        MinWidth="940"
         ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="#EEF2F7">
 
-    <Grid Background="#F5F6FA">
-        <Border Width="360"
-                Padding="24"
+    <Window.Resources>
+        <LinearGradientBrush x:Key="BrandPanelBrush" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#FFF7DB" Offset="0" />
+            <GradientStop Color="#FFEFB5" Offset="1" />
+        </LinearGradientBrush>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="46" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="BorderBrush" Value="#2563EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="18,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="28">
+        <Border CornerRadius="24"
                 Background="White"
-                CornerRadius="12"
-                BorderBrush="#D9DDE7"
-                BorderThickness="1"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center">
+                BorderBrush="#D9E1EC"
+                BorderThickness="1">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.15*" />
+                    <ColumnDefinition Width="1*" />
+                </Grid.ColumnDefinitions>
 
-            <StackPanel>
-                <TextBlock Text="Fichaje de Empresa"
-                           FontSize="24"
-                           FontWeight="Bold"
-                           Margin="0,0,0,8" />
+                <!-- PANEL IZQUIERDO DE MARCA -->
+                <Border Grid.Column="0"
+                        CornerRadius="24,0,0,24"
+                        Background="{StaticResource BrandPanelBrush}"
+                        Padding="36">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="24" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="24" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
 
-                <TextBlock Text="Login conectado a la API"
-                           FontSize="14"
-                           Foreground="#666666"
-                           Margin="0,0,0,20" />
+                        <StackPanel Grid.Row="0">
+                            <Border Width="170"
+                                    Height="120"
+                                    CornerRadius="18"
+                                    Background="White"
+                                    Padding="16"
+                                    HorizontalAlignment="Left">
+                                <Image Source="pack://application:,,,/Assets/Images/hiflunecan.png"
+                                       Stretch="Uniform" />
+                            </Border>
+                        </StackPanel>
 
-                <TextBlock Text="Usuario"
-                           Margin="0,0,0,6" />
+                        <StackPanel Grid.Row="2">
+                            <TextBlock x:Name="CompanyNameTextBlock"
+                                       FontSize="30"
+                                       FontWeight="Bold"
+                                       Foreground="#111827"
+                                       TextWrapping="Wrap" />
 
-                <TextBox x:Name="UserNameTextBox"
-                         Height="34"
-                         FontSize="14"
-                         Margin="0,0,0,14" />
+                            <TextBlock x:Name="BrandNameTextBlock"
+                                       Margin="0,10,0,0"
+                                       FontSize="19"
+                                       FontWeight="SemiBold"
+                                       Foreground="#374151"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
 
-                <TextBlock Text="Contraseña"
-                           Margin="0,0,0,6" />
+                        <StackPanel Grid.Row="4"
+                                    VerticalAlignment="Top">
+                            <TextBlock Text="Sistema interno de fichaje"
+                                       FontSize="16"
+                                       FontWeight="SemiBold"
+                                       Foreground="#374151" />
 
-                <PasswordBox x:Name="PasswordBox"
-                             Height="34"
-                             FontSize="14"
-                             Margin="0,0,0,18"
-                             KeyDown="PasswordBox_KeyDown" />
+                            <TextBlock x:Name="WelcomeMessageTextBlock"
+                                       Margin="0,14,0,0"
+                                       FontSize="14"
+                                       Foreground="#4B5563"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
 
-                <Button x:Name="LoginButton"
-                        Content="Iniciar sesión"
-                        Height="40"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Click="LoginButton_Click" />
+                <!-- PANEL DERECHO DE LOGIN -->
+                <Grid Grid.Column="1"
+                      Margin="40">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="20" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="24" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                <TextBlock x:Name="StatusTextBlock"
-                           Margin="0,16,0,0"
-                           TextWrapping="Wrap"
-                           Foreground="#B00020"
-                           FontSize="13" />
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="Acceso al sistema"
+                                   FontSize="28"
+                                   FontWeight="Bold"
+                                   Foreground="#0F172A" />
 
-                <Separator Margin="0,18,0,14" />
+                        <TextBlock Text="Introduce tu usuario y contraseña para continuar."
+                                   Margin="0,10,0,0"
+                                   FontSize="14"
+                                   Foreground="#64748B"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
 
-                <TextBlock Text="Usuarios de prueba"
-                           FontWeight="SemiBold"
-                           Margin="0,0,0,8" />
+                    <StackPanel Grid.Row="2">
+                        <TextBlock Text="Usuario"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#475569"
+                                   Margin="0,0,0,8" />
 
-                <TextBlock Text="admin / admin123"
-                           Foreground="#555555"
-                           Margin="0,0,0,4" />
+                        <TextBox x:Name="UserNameTextBox"
+                                 Height="38"
+                                 FontSize="14"
+                                 Padding="10,6" />
+                    </StackPanel>
 
-                <TextBlock Text="juan / 1234"
-                           Foreground="#555555"
-                           Margin="0,0,0,4" />
+                    <StackPanel Grid.Row="4">
+                        <TextBlock Text="Contraseña"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#475569"
+                                   Margin="0,0,0,8" />
 
-                <TextBlock Text="maria / 1234"
-                           Foreground="#555555" />
-            </StackPanel>
+                        <PasswordBox x:Name="PasswordBox"
+                                     Height="38"
+                                     FontSize="14"
+                                     Padding="10,6"
+                                     KeyDown="PasswordBox_KeyDown" />
+                    </StackPanel>
+
+                    <Button Grid.Row="6"
+                            x:Name="LoginButton"
+                            Content="Iniciar sesión"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Click="LoginButton_Click" />
+
+                    <Border Grid.Row="8"
+                            x:Name="StatusBorder"
+                            Padding="12"
+                            Background="#FDECEC"
+                            BorderBrush="#F2B8B5"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Visibility="Collapsed">
+                        <TextBlock x:Name="StatusTextBlock"
+                                   Foreground="#9F1239"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <Border Grid.Row="10"
+                            Padding="18"
+                            Background="#F8FAFC"
+                            BorderBrush="#E2E8F0"
+                            BorderThickness="1"
+                            CornerRadius="16">
+                        <StackPanel>
+                            <TextBlock Text="Usuarios de prueba"
+                                       FontSize="15"
+                                       FontWeight="Bold"
+                                       Foreground="#0F172A"
+                                       Margin="0,0,0,12" />
+
+                            <TextBlock Text="admin / admin123"
+                                       FontSize="14"
+                                       Foreground="#334155"
+                                       Margin="0,0,0,6" />
+
+                            <TextBlock Text="juan / 1234"
+                                       FontSize="14"
+                                       Foreground="#334155"
+                                       Margin="0,0,0,6" />
+
+                            <TextBlock Text="maria / 1234"
+                                       FontSize="14"
+                                       Foreground="#334155" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
         </Border>
     </Grid>
 </Window>

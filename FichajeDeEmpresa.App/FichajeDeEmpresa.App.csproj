@@ -9,7 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Images\hiflunecan.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FichajeDeEmpresa.Shared\FichajeDeEmpresa.Shared.csproj" />
+    <Resource Include="Assets\Images\hiflunecan.png" />
   </ItemGroup>
 
 </Project>

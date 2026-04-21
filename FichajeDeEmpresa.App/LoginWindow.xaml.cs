@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
+using FichajeDeEmpresa.App.Configuration;
 using FichajeDeEmpresa.App.Services;
 using FichajeDeEmpresa.Shared.Contracts.Auth;
 
@@ -12,7 +13,16 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
+        ApplyBranding();
         Loaded += LoginWindow_Loaded;
+    }
+
+    private void ApplyBranding()
+    {
+        Title = $"{BrandingConfiguration.CompanyLegalName} - Inicio de sesión";
+        CompanyNameTextBlock.Text = BrandingConfiguration.CompanyLegalName;
+        BrandNameTextBlock.Text = BrandingConfiguration.BrandDisplayName;
+        WelcomeMessageTextBlock.Text = BrandingConfiguration.LoginWelcomeMessage;
     }
 
     private void LoginWindow_Loaded(object sender, RoutedEventArgs e)
@@ -35,7 +45,7 @@ public partial class LoginWindow : Window
 
     private async Task ExecuteLoginAsync()
     {
-        StatusTextBlock.Text = string.Empty;
+        ShowStatus(string.Empty, false);
 
         var request = new LoginRequestDto
         {
@@ -51,7 +61,7 @@ public partial class LoginWindow : Window
 
         if (!result.IsSuccess)
         {
-            StatusTextBlock.Text = result.Message;
+            ShowStatus(result.Message, true);
             return;
         }
 
@@ -70,5 +80,31 @@ public partial class LoginWindow : Window
         PasswordBox.IsEnabled = !isBusy;
 
         LoginButton.Content = isBusy ? "Conectando..." : "Iniciar sesión";
+    }
+
+    private void ShowStatus(string message, bool isError)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            StatusBorder.Visibility = Visibility.Collapsed;
+            StatusTextBlock.Text = string.Empty;
+            return;
+        }
+
+        StatusBorder.Visibility = Visibility.Visible;
+        StatusTextBlock.Text = message;
+
+        if (isError)
+        {
+            StatusBorder.Background = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#FDECEC")!;
+            StatusBorder.BorderBrush = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F2B8B5")!;
+            StatusTextBlock.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#9F1239")!;
+        }
+        else
+        {
+            StatusBorder.Background = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#EEF6FF")!;
+            StatusBorder.BorderBrush = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#BFD7FF")!;
+            StatusTextBlock.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#1D4F91")!;
+        }
     }
 }
