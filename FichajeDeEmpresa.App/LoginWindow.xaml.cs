@@ -1,3 +1,4 @@
+using System;
 using System.Windows;
 using System.Windows.Input;
 using FichajeDeEmpresa.App.Configuration;
@@ -65,10 +66,12 @@ public partial class LoginWindow : Window
             return;
         }
 
-        var mainWindow = new MainWindow(result);
+        Window nextWindow = IsAdminRole(result.Role)
+            ? new AdminWindow(result)
+            : new MainWindow(result);
 
-        Application.Current.MainWindow = mainWindow;
-        mainWindow.Show();
+        Application.Current.MainWindow = nextWindow;
+        nextWindow.Show();
 
         Close();
     }
@@ -106,5 +109,11 @@ public partial class LoginWindow : Window
             StatusBorder.BorderBrush = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#BFD7FF")!;
             StatusTextBlock.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#1D4F91")!;
         }
+    }
+
+    private static bool IsAdminRole(string? role)
+    {
+        return !string.IsNullOrWhiteSpace(role) &&
+               role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
     }
 }

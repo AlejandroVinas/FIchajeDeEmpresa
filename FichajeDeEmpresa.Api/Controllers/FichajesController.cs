@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace FichajeDeEmpresa.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/fichajes")]
 public class FichajesController : ControllerBase
 {
     private readonly IFichajeService _fichajeService;
@@ -16,23 +16,57 @@ public class FichajesController : ControllerBase
     }
 
     [HttpPost("entrada")]
-    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterEntry([FromBody] RegisterFichajeRequestDto request)
+    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterEntryAsync([FromBody] RegisterFichajeRequestDto request)
     {
         var result = await _fichajeService.RegisterEntryAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
         return Ok(result);
     }
 
     [HttpPost("salida")]
-    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterExit([FromBody] RegisterFichajeRequestDto request)
+    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterExitAsync([FromBody] RegisterFichajeRequestDto request)
     {
         var result = await _fichajeService.RegisterExitAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
         return Ok(result);
     }
 
     [HttpGet("resumen-hoy/{userId:int}")]
-    public async Task<ActionResult<FichajeOperationResponseDto>> GetTodaySummary(int userId)
+    public async Task<ActionResult<FichajeOperationResponseDto>> GetTodaySummaryAsync(int userId)
     {
         var result = await _fichajeService.GetTodaySummaryAsync(userId);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpGet("historial")]
+    public async Task<ActionResult<AdminFichajeHistoryResponseDto>> GetHistoryAsync(
+        [FromQuery] int? userId,
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate)
+    {
+        var result = await _fichajeService.GetHistoryAsync(userId, fromDate, toDate);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
         return Ok(result);
     }
 }

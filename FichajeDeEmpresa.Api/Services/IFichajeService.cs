@@ -9,4 +9,6 @@ public interface IFichajeService
     Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request);
 
     Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId);
+
+    Task<AdminFichajeHistoryResponseDto> GetHistoryAsync(int? userId, DateTime? fromDate, DateTime? toDate);
 }

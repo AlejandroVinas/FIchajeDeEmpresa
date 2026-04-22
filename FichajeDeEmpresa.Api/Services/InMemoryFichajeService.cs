@@ -148,6 +148,117 @@ public class InMemoryFichajeService : IFichajeService
         }
     }
 
+    public async Task<AdminFichajeHistoryResponseDto> GetHistoryAsync(int? userId, DateTime? fromDate, DateTime? toDate)
+    {
+        var startDate = (fromDate ?? DateTime.Today.AddDays(-30)).Date;
+        var endDate = (toDate ?? DateTime.Today).Date;
+
+        if (startDate > endDate)
+        {
+            return new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = false,
+                Message = "La fecha desde no puede ser mayor que la fecha hasta."
+            };
+        }
+
+        var usersResult = await _authService.GetAllUsersAsync();
+
+        if (!usersResult.IsSuccess)
+        {
+            return new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = false,
+                Message = "No se ha podido obtener la lista de usuarios."
+            };
+        }
+
+        var usersById = usersResult.Users.ToDictionary(u => u.UserId);
+
+        if (userId.HasValue && !usersById.ContainsKey(userId.Value))
+        {
+            return new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = false,
+                Message = "El usuario indicado no existe."
+            };
+        }
+
+        lock (_lock)
+        {
+            var filteredRecords = _records
+                .Where(r => r.Timestamp.Date >= startDate && r.Timestamp.Date <= endDate);
+
+            if (userId.HasValue)
+            {
+                filteredRecords = filteredRecords.Where(r => r.UserId == userId.Value);
+            }
+
+            var dayGroups = filteredRecords
+                .GroupBy(r => new { r.UserId, Date = r.Timestamp.Date })
+                .OrderByDescending(g => g.Key.Date)
+                .ThenBy(g => g.Key.UserId)
+                .ToList();
+
+            var resultDays = new List<AdminFichajeHistoryDayDto>();
+
+            foreach (var group in dayGroups)
+            {
+                if (!usersById.TryGetValue(group.Key.UserId, out var user))
+                {
+                    continue;
+                }
+
+                var dayRecords = group
+                    .OrderBy(r => r.Timestamp)
+                    .ToList();
+
+                var workedSeconds = CalculateWorkedSecondsForDate(
+                    dayRecords,
+                    user.ExpectedDailyHours,
+                    group.Key.Date,
+                    DateTime.Now);
+
+                var expectedDailySeconds = (int)Math.Max(0, Math.Round(user.ExpectedDailyHours * 3600m));
+                var normalSeconds = Math.Min(workedSeconds, expectedDailySeconds);
+                var extraSeconds = Math.Max(0, workedSeconds - expectedDailySeconds);
+
+                var lastRecord = dayRecords.LastOrDefault();
+                var isWorking = lastRecord?.Type == FichajeType.Entry;
+
+                var movements = dayRecords
+                    .OrderByDescending(r => r.Timestamp)
+                    .Select(r => new FichajeMovementDto
+                    {
+                        Type = r.Type == FichajeType.Entry ? "Entrada" : "Salida",
+                        Timestamp = r.Timestamp,
+                        Comment = r.Comment
+                    })
+                    .ToList();
+
+                resultDays.Add(new AdminFichajeHistoryDayDto
+                {
+                    UserId = user.UserId,
+                    UserName = user.UserName,
+                    FullName = user.FullName,
+                    Date = group.Key.Date,
+                    WorkedSeconds = workedSeconds,
+                    NormalSeconds = normalSeconds,
+                    ExtraSeconds = extraSeconds,
+                    IsWorking = isWorking,
+                    Movements = movements
+                });
+            }
+
+            return new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = true,
+                Message = "Historial obtenido correctamente.",
+                Days = resultDays
+            };
+        }
+    }
+
     private DaySummaryDto BuildTodaySummary(int userId, decimal expectedDailyHours, DateTime now)
     {
         var todayRecords = _records
@@ -161,7 +272,7 @@ public class InMemoryFichajeService : IFichajeService
         var lastEntry = todayRecords.LastOrDefault(r => r.Type == FichajeType.Entry)?.Timestamp;
         var lastExit = todayRecords.LastOrDefault(r => r.Type == FichajeType.Exit)?.Timestamp;
 
-        var workedSeconds = CalculateWorkedSeconds(todayRecords, now);
+        var workedSeconds = CalculateWorkedSecondsForDate(todayRecords, expectedDailyHours, now.Date, now);
 
         var expectedDailySeconds = (int)Math.Max(0, Math.Round(expectedDailyHours * 3600m));
         var normalSeconds = Math.Min(workedSeconds, expectedDailySeconds);
@@ -190,12 +301,16 @@ public class InMemoryFichajeService : IFichajeService
         };
     }
 
-    private static int CalculateWorkedSeconds(List<FichajeRecord> records, DateTime now)
+    private static int CalculateWorkedSecondsForDate(
+        List<FichajeRecord> records,
+        decimal expectedDailyHours,
+        DateTime date,
+        DateTime now)
     {
         var totalSeconds = 0;
         DateTime? openEntry = null;
 
-        foreach (var record in records)
+        foreach (var record in records.OrderBy(r => r.Timestamp))
         {
             if (record.Type == FichajeType.Entry)
             {
@@ -217,7 +332,11 @@ public class InMemoryFichajeService : IFichajeService
 
         if (openEntry is not null)
         {
-            var seconds = (int)Math.Max(0, (now - openEntry.Value).TotalSeconds);
+            var closingMoment = date.Date == now.Date
+                ? now
+                : date.Date.AddDays(1).AddSeconds(-1);
+
+            var seconds = (int)Math.Max(0, (closingMoment - openEntry.Value).TotalSeconds);
             totalSeconds += seconds;
         }
 

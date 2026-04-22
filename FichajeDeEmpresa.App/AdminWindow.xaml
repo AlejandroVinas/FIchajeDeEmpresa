@@ -1,0 +1,472 @@
+<Window x:Class="FichajeDeEmpresa.App.AdminWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="HIFLUNECAN S.L. - Administración"
+        Height="760"
+        Width="1240"
+        MinHeight="720"
+        MinWidth="1120"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize"
+        ShowInTaskbar="True"
+        WindowState="Maximized"
+        Background="#EEF2F7">
+
+    <Window.Resources>
+        <Style x:Key="CardBorderStyle" TargetType="Border">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#D9E1EC" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="18" />
+        </Style>
+
+        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Foreground" Value="#17212B" />
+        </Style>
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="#64748B" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="42" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#2563EB" />
+            <Setter Property="BorderBrush" Value="#2563EB" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="18,0" />
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
+            <Setter Property="Foreground" Value="#0F172A" />
+            <Setter Property="Background" Value="White" />
+            <Setter Property="BorderBrush" Value="#CBD5E1" />
+        </Style>
+    </Window.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="1.05*" />
+            <RowDefinition Height="14" />
+            <RowDefinition Height="1.1*" />
+        </Grid.RowDefinitions>
+
+        <!-- CABECERA -->
+        <Border Grid.Row="0"
+                Style="{StaticResource CardBorderStyle}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="18" />
+                    <ColumnDefinition Width="260" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0"
+                        Width="84"
+                        Height="64"
+                        CornerRadius="12"
+                        Background="#FFF8E1"
+                        Padding="8"
+                        VerticalAlignment="Center">
+                    <Image Source="pack://application:,,,/Assets/Images/hiflunecan.png"
+                           Stretch="Uniform" />
+                </Border>
+
+                <StackPanel Grid.Column="2"
+                            VerticalAlignment="Center">
+                    <TextBlock x:Name="HeaderCompanyNameTextBlock"
+                               FontSize="24"
+                               FontWeight="Bold"
+                               Foreground="#0F172A" />
+
+                    <TextBlock x:Name="HeaderBrandTextBlock"
+                               Margin="0,2,0,0"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Foreground="#475569" />
+
+                    <TextBlock x:Name="WelcomeTextBlock"
+                               Margin="0,10,0,4"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="#1E293B" />
+
+                    <TextBlock Text="Desde aquí puedes crear usuarios y consultar el historial detallado de fichajes."
+                               FontSize="13"
+                               Foreground="#64748B"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <Border Grid.Column="4"
+                        Background="#F8FAFC"
+                        BorderBrush="#D9E1EC"
+                        BorderThickness="1"
+                        CornerRadius="14"
+                        Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Sesión actual"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="#64748B"
+                                   Margin="0,0,0,8" />
+
+                        <TextBlock x:Name="SessionUserNameTextBlock"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Foreground="#0F172A" />
+
+                        <TextBlock x:Name="SessionRoleTextBlock"
+                                   Margin="0,4,0,0"
+                                   FontSize="13"
+                                   Foreground="#334155" />
+
+                        <Button x:Name="ChangeUserButton"
+                                Margin="0,14,0,0"
+                                Width="150"
+                                Content="Cambiar usuario"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="ChangeUserButton_Click" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- BLOQUE SUPERIOR -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.1*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="0.9*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LISTA DE USUARIOS -->
+            <Border Grid.Column="0"
+                    Style="{StaticResource CardBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="14" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Usuarios del sistema"
+                                       Style="{StaticResource SectionTitleStyle}" />
+
+                            <TextBlock Margin="0,6,0,0"
+                                       Text="Aquí ves los usuarios disponibles actualmente en la API en memoria."
+                                       FontSize="13"
+                                       Foreground="#64748B"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                x:Name="RefreshUsersButton"
+                                Width="150"
+                                Content="Actualizar lista"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="RefreshUsersButton_Click" />
+                    </Grid>
+
+                    <TextBlock Grid.Row="2"
+                               x:Name="UsersCountTextBlock"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="#475569"
+                               Text="Total usuarios: 0" />
+
+                    <ListBox Grid.Row="4"
+                             x:Name="UsersListBox"
+                             BorderThickness="0"
+                             Background="Transparent">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,10"
+                                        Padding="14"
+                                        Background="#F8FAFC"
+                                        BorderBrush="#E2E8F0"
+                                        BorderThickness="1"
+                                        CornerRadius="12">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding FullName}"
+                                                   FontSize="16"
+                                                   FontWeight="Bold"
+                                                   Foreground="#17212B" />
+
+                                        <TextBlock Margin="0,6,0,0"
+                                                   Text="{Binding UserName, StringFormat=Usuario: {0}}"
+                                                   FontSize="13"
+                                                   Foreground="#475569" />
+
+                                        <TextBlock Margin="0,4,0,0"
+                                                   Text="{Binding Role, StringFormat=Rol: {0}}"
+                                                   FontSize="13"
+                                                   Foreground="#475569" />
+
+                                        <TextBlock Margin="0,4,0,0"
+                                                   Text="{Binding ExpectedDailyHours, StringFormat=Jornada objetivo: {0} horas/día}"
+                                                   FontSize="13"
+                                                   Foreground="#475569" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <!-- CREAR USUARIO -->
+            <Border Grid.Column="2"
+                    Style="{StaticResource CardBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="16" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Crear usuario"
+                               Style="{StaticResource SectionTitleStyle}" />
+
+                    <StackPanel Grid.Row="2">
+                        <TextBlock Text="Nombre completo"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="FullNameTextBox"
+                                 Height="40"
+                                 FontSize="14"
+                                 Padding="10,6" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4">
+                        <TextBlock Text="Nombre de usuario"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="UserNameTextBox"
+                                 Height="40"
+                                 FontSize="14"
+                                 Padding="10,6" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="6">
+                        <TextBlock Text="Contraseña"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <PasswordBox x:Name="PasswordTextBox"
+                                     Height="40"
+                                     FontSize="14"
+                                     Padding="10,6" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="8">
+                        <TextBlock Text="Rol"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <ComboBox x:Name="RoleComboBox"
+                                  Height="40"
+                                  FontSize="14"
+                                  Padding="8,4" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="10">
+                        <TextBlock Text="Horas diarias objetivo"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <TextBox x:Name="ExpectedDailyHoursTextBox"
+                                 Height="40"
+                                 FontSize="14"
+                                 Padding="10,6" />
+                    </StackPanel>
+
+                    <Button Grid.Row="12"
+                            x:Name="CreateUserButton"
+                            Width="170"
+                            Content="Crear usuario"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Click="CreateUserButton_Click" />
+
+                    <Border Grid.Row="14"
+                            x:Name="MessageBorder"
+                            Padding="12"
+                            Background="#EEF6FF"
+                            BorderBrush="#BFD7FF"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Visibility="Collapsed">
+                        <TextBlock x:Name="MessageTextBlock"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="#1D4F91"
+                                   TextWrapping="Wrap" />
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- HISTORIAL DETALLADO -->
+        <Border Grid.Row="4"
+                Style="{StaticResource CardBorderStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Historial detallado de fichajes"
+                                   Style="{StaticResource SectionTitleStyle}" />
+
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="Filtra por usuario y rango de fechas para ver movimientos, comentarios y horas extra."
+                                   FontSize="13"
+                                   Foreground="#64748B"
+                                   TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <Button Grid.Column="1"
+                            x:Name="SearchHistoryButton"
+                            Width="130"
+                            Content="Buscar"
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Click="SearchHistoryButton_Click" />
+                </Grid>
+
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.1*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="0.8*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="0.8*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Usuario"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <ComboBox x:Name="HistoryUserComboBox"
+                                  Height="40"
+                                  FontSize="14"
+                                  Padding="8,4"
+                                  DisplayMemberPath="DisplayName" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Fecha desde"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <DatePicker x:Name="FromDatePicker"
+                                    Height="40"
+                                    FontSize="14" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="Fecha hasta"
+                                   Style="{StaticResource FieldLabelStyle}" />
+                        <DatePicker x:Name="ToDatePicker"
+                                    Height="40"
+                                    FontSize="14" />
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Grid.Row="4"
+                           x:Name="HistorySummaryTextBlock"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Foreground="#475569"
+                           Text="Sin resultados cargados todavía." />
+
+                <ListBox Grid.Row="6"
+                         x:Name="HistoryListBox"
+                         BorderThickness="0"
+                         Background="Transparent">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,12"
+                                    Padding="14"
+                                    Background="#F8FAFC"
+                                    BorderBrush="#E2E8F0"
+                                    BorderThickness="1"
+                                    CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="#17212B" />
+
+                                    <TextBlock Margin="0,6,0,0"
+                                               Text="{Binding Summary}"
+                                               FontSize="13"
+                                               Foreground="#475569"
+                                               TextWrapping="Wrap" />
+
+                                    <ItemsControl Margin="0,10,0,0"
+                                                  ItemsSource="{Binding MovementLines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,8"
+                                                        Padding="10"
+                                                        Background="White"
+                                                        BorderBrush="#E2E8F0"
+                                                        BorderThickness="1"
+                                                        CornerRadius="10">
+                                                    <TextBlock Text="{Binding}"
+                                                               FontSize="13"
+                                                               Foreground="#1E293B"
+                                                               TextWrapping="Wrap" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

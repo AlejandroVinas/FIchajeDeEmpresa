@@ -1,10 +1,10 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Threading.Tasks;
 using FichajeDeEmpresa.App.Configuration;
 using FichajeDeEmpresa.Shared.Contracts.Auth;
 using FichajeDeEmpresa.Shared.Contracts.Fichajes;
+using FichajeDeEmpresa.Shared.Contracts.Users;
 
 namespace FichajeDeEmpresa.App.Services;
 
@@ -24,26 +24,21 @@ public class ApiClient
     {
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync("api/auth/login", request);
+            var response = await _httpClient.PostAsJsonAsync("api/auth/login", request);
             var result = await response.Content.ReadFromJsonAsync<LoginResponseDto>();
 
-            if (result is null)
+            return result ?? new LoginResponseDto
             {
-                return new LoginResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "La API devolvió una respuesta vacía."
-                };
-            }
-
-            return result;
+                IsSuccess = false,
+                Message = "La API no devolvió una respuesta válida."
+            };
         }
         catch (Exception ex)
         {
             return new LoginResponseDto
             {
                 IsSuccess = false,
-                Message = $"No se pudo conectar con el servidor: {ex.Message}"
+                Message = $"No se pudo conectar con la API. {ex.Message}"
             };
         }
     }
@@ -62,26 +57,141 @@ public class ApiClient
     {
         try
         {
-            using var response = await _httpClient.GetAsync($"api/fichajes/resumen-hoy/{userId}");
-            var result = await response.Content.ReadFromJsonAsync<FichajeOperationResponseDto>();
+            var result = await _httpClient.GetFromJsonAsync<FichajeOperationResponseDto>($"api/fichajes/resumen-hoy/{userId}");
 
-            if (result is null)
+            return result ?? new FichajeOperationResponseDto
             {
-                return new FichajeOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "La API devolvió una respuesta vacía."
-                };
-            }
-
-            return result;
+                IsSuccess = false,
+                Message = "La API no devolvió una respuesta válida."
+            };
         }
         catch (Exception ex)
         {
             return new FichajeOperationResponseDto
             {
                 IsSuccess = false,
-                Message = $"No se pudo conectar con el servidor: {ex.Message}"
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<AdminFichajeHistoryResponseDto> GetFichajeHistoryAsync(int? userId, DateTime fromDate, DateTime toDate)
+    {
+        try
+        {
+            var query = $"api/fichajes/historial?fromDate={fromDate:yyyy-MM-dd}&toDate={toDate:yyyy-MM-dd}";
+
+            if (userId.HasValue)
+            {
+                query += $"&userId={userId.Value}";
+            }
+
+            var response = await _httpClient.GetAsync(query);
+            var result = await response.Content.ReadFromJsonAsync<AdminFichajeHistoryResponseDto>();
+
+            if (result is null)
+            {
+                return new AdminFichajeHistoryResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo obtener el historial de fichajes.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<UserListResponseDto> GetUsersAsync()
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync("api/users");
+            var result = await response.Content.ReadFromJsonAsync<UserListResponseDto>();
+
+            if (result is null)
+            {
+                return new UserListResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo obtener la lista de usuarios.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new UserListResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<UserOperationResponseDto> CreateUserAsync(CreateUserRequestDto request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/users", request);
+            var result = await response.Content.ReadFromJsonAsync<UserOperationResponseDto>();
+
+            if (result is null)
+            {
+                return new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo crear el usuario.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new UserOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
             };
         }
     }
@@ -90,26 +200,21 @@ public class ApiClient
     {
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync(url, request);
+            var response = await _httpClient.PostAsJsonAsync(url, request);
             var result = await response.Content.ReadFromJsonAsync<FichajeOperationResponseDto>();
 
-            if (result is null)
+            return result ?? new FichajeOperationResponseDto
             {
-                return new FichajeOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "La API devolvió una respuesta vacía."
-                };
-            }
-
-            return result;
+                IsSuccess = false,
+                Message = "La API no devolvió una respuesta válida."
+            };
         }
         catch (Exception ex)
         {
             return new FichajeOperationResponseDto
             {
                 IsSuccess = false,
-                Message = $"No se pudo conectar con el servidor: {ex.Message}"
+                Message = $"No se pudo conectar con la API. {ex.Message}"
             };
         }
     }
