@@ -6,7 +6,7 @@ public static class BrandingConfiguration
     public const string BrandDisplayName = "Estudio de Fluidos";
 
     public const string LoginWelcomeMessage =
-        "Bienvenido/a al sistema interno de fichaje. Inicia sesión para registrar tu jornada y consultar tu resumen del día.";
+        "Accede con tu cuenta para registrar tu jornada y consultar tu resumen diario.";
 
     public const string MainWelcomeMessage =
         "Gestiona tu jornada diaria, consulta tu estado actual y revisa tu progreso en una única pantalla.";

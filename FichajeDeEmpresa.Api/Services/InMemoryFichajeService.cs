@@ -49,7 +49,11 @@ public class InMemoryFichajeService : IFichajeService
                 };
             }
 
-            _records.Add(new FichajeRecord(request.UserId, DateTime.Now, FichajeType.Entry));
+            _records.Add(new FichajeRecord(
+                request.UserId,
+                DateTime.Now,
+                FichajeType.Entry,
+                NormalizeComment(request.Comment)));
 
             return new FichajeOperationResponseDto
             {
@@ -96,7 +100,11 @@ public class InMemoryFichajeService : IFichajeService
                 };
             }
 
-            _records.Add(new FichajeRecord(request.UserId, DateTime.Now, FichajeType.Exit));
+            _records.Add(new FichajeRecord(
+                request.UserId,
+                DateTime.Now,
+                FichajeType.Exit,
+                NormalizeComment(request.Comment)));
 
             return new FichajeOperationResponseDto
             {
@@ -164,7 +172,8 @@ public class InMemoryFichajeService : IFichajeService
             .Select(r => new FichajeMovementDto
             {
                 Type = r.Type == FichajeType.Entry ? "Entrada" : "Salida",
-                Timestamp = r.Timestamp
+                Timestamp = r.Timestamp,
+                Comment = r.Comment
             })
             .ToList();
 
@@ -215,7 +224,14 @@ public class InMemoryFichajeService : IFichajeService
         return totalSeconds;
     }
 
-    private sealed record FichajeRecord(int UserId, DateTime Timestamp, FichajeType Type);
+    private static string? NormalizeComment(string? comment)
+    {
+        return string.IsNullOrWhiteSpace(comment)
+            ? null
+            : comment.Trim();
+    }
+
+    private sealed record FichajeRecord(int UserId, DateTime Timestamp, FichajeType Type, string? Comment);
 
     private enum FichajeType
     {

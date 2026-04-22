@@ -5,4 +5,6 @@ public class FichajeMovementDto
     public string Type { get; set; } = string.Empty;
 
     public DateTime Timestamp { get; set; }
+
+    public string? Comment { get; set; }
 }

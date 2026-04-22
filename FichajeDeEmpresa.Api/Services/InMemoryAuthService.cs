@@ -7,9 +7,8 @@ public class InMemoryAuthService : IAuthService
 {
     private readonly List<UserRecord> _users =
     [
-        new UserRecord(1, "admin", "admin123", "Administrador del sistema", "Admin", 8m),
-        new UserRecord(2, "juan", "1234", "Juan Pérez", "Empleado", 8m),
-        new UserRecord(3, "maria", "1234", "María García", "Empleado", 4m)
+        new UserRecord(1, "admin", "admin", "Administrador", "Admin", 8m),
+        new UserRecord(2, "user", "user", "Usuario", "Empleado", 8m)
     ];
 
     public Task<LoginResponseDto> LoginAsync(LoginRequestDto request)

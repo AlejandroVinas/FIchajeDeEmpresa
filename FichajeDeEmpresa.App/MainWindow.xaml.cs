@@ -4,6 +4,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Media;
 using FichajeDeEmpresa.App.Configuration;
+using FichajeDeEmpresa.App.Dialogs;
 using FichajeDeEmpresa.App.Services;
 using FichajeDeEmpresa.Shared.Contracts.Auth;
 using FichajeDeEmpresa.Shared.Contracts.Fichajes;
@@ -42,6 +43,9 @@ public partial class MainWindow : Window
         _loggedUser = loggedUser ?? throw new ArgumentNullException(nameof(loggedUser));
 
         InitializeComponent();
+
+        WindowState = WindowState.Maximized;
+
         LoadUserData();
         ShowMessage(string.Empty, false);
         Loaded += MainWindow_Loaded;
@@ -49,17 +53,18 @@ public partial class MainWindow : Window
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        WindowState = WindowState.Maximized;
         await LoadTodaySummaryAsync();
     }
 
     private async void EntryButton_Click(object sender, RoutedEventArgs e)
     {
-        await RegisterFichajeAsync(isEntry: true);
+        await RegisterFichajeWithOptionalCommentAsync(isEntry: true);
     }
 
     private async void ExitButton_Click(object sender, RoutedEventArgs e)
     {
-        await RegisterFichajeAsync(isEntry: false);
+        await RegisterFichajeWithOptionalCommentAsync(isEntry: false);
     }
 
     private async void RefreshButton_Click(object sender, RoutedEventArgs e)
@@ -112,14 +117,34 @@ public partial class MainWindow : Window
         ShowMessage("Resumen del día cargado correctamente.", false);
     }
 
-    private async Task RegisterFichajeAsync(bool isEntry)
+    private async Task RegisterFichajeWithOptionalCommentAsync(bool isEntry)
+    {
+        var actionName = isEntry ? "entrada" : "salida";
+
+        var dialog = new FichajeCommentWindow(actionName)
+        {
+            Owner = this
+        };
+
+        var dialogResult = dialog.ShowDialog();
+
+        if (dialogResult != true)
+        {
+            return;
+        }
+
+        await RegisterFichajeAsync(isEntry, dialog.CommentText);
+    }
+
+    private async Task RegisterFichajeAsync(bool isEntry, string? comment)
     {
         ShowMessage(string.Empty, false);
         SetBusyState(true);
 
         var request = new RegisterFichajeRequestDto
         {
-            UserId = _loggedUser.UserId
+            UserId = _loggedUser.UserId,
+            Comment = comment
         };
 
         var result = isEntry
@@ -144,21 +169,22 @@ public partial class MainWindow : Window
 
         WorkedTodayValueTextBlock.Text = FormatWorkedTime(summary.WorkedSecondsToday);
         NormalHoursValueTextBlock.Text = FormatWorkedTime(summary.NormalSecondsToday);
-        ExtraHoursValueTextBlock.Text = FormatWorkedTime(summary.ExtraSecondsToday);
 
-        ExtraHoursValueTextBlock.Foreground = summary.ExtraSecondsToday > 0
-            ? _extraMetricBrush
-            : _defaultMetricBrush;
+        if (summary.ExtraSecondsToday > 0)
+        {
+            ExtraHoursCardBorder.Visibility = Visibility.Visible;
+            ExtraHoursValueTextBlock.Text = FormatWorkedTime(summary.ExtraSecondsToday);
+            ExtraHoursValueTextBlock.Foreground = _extraMetricBrush;
+            ExtraHoursHintTextBlock.Text = "Hay horas extra registradas hoy.";
+            ExtraHoursHintTextBlock.Foreground = _extraMetricBrush;
+        }
+        else
+        {
+            ExtraHoursCardBorder.Visibility = Visibility.Collapsed;
+            ExtraHoursValueTextBlock.Text = "00:00:00";
+            ExtraHoursValueTextBlock.Foreground = _defaultMetricBrush;
+        }
 
-        LastEntryValueTextBlock.Text = FormatOptionalTimestamp(
-            summary.LastEntryTime,
-            "Todavía no hay entrada registrada hoy.");
-
-        LastExitValueTextBlock.Text = FormatOptionalTimestamp(
-            summary.LastExitTime,
-            "Todavía no hay salida registrada hoy.");
-
-        ApplyProgress(summary);
         MovementsListBox.ItemsSource = BuildMovementLines(summary);
 
         UpdateButtons();
@@ -168,9 +194,6 @@ public partial class MainWindow : Window
     {
         if (isWorking)
         {
-            CurrentStatusValueTextBlock.Text = "Trabajando";
-            CurrentStatusValueTextBlock.Foreground = _workingTextBrush;
-
             StatusBadgeTextBlock.Text = "TRABAJANDO";
             StatusBadgeTextBlock.Foreground = _workingTextBrush;
             StatusBadgeBorder.Background = _workingBackgroundBrush;
@@ -178,40 +201,10 @@ public partial class MainWindow : Window
         }
         else
         {
-            CurrentStatusValueTextBlock.Text = "Fuera";
-            CurrentStatusValueTextBlock.Foreground = _outsideTextBrush;
-
             StatusBadgeTextBlock.Text = "FUERA";
             StatusBadgeTextBlock.Foreground = _outsideTextBrush;
             StatusBadgeBorder.Background = _outsideBackgroundBrush;
             StatusBadgeBorder.BorderBrush = _outsideBorderBrush;
-        }
-    }
-
-    private void ApplyProgress(DaySummaryDto summary)
-    {
-        var expectedDailySeconds = GetExpectedDailySeconds();
-
-        if (expectedDailySeconds <= 0)
-        {
-            DailyProgressBar.Value = 0;
-            ProgressValueTextBlock.Text = "Sin objetivo diario configurado.";
-            return;
-        }
-
-        var progressPercentage = Math.Min(
-            100d,
-            (double)summary.NormalSecondsToday * 100d / expectedDailySeconds);
-
-        DailyProgressBar.Value = progressPercentage;
-
-        if (summary.ExtraSecondsToday > 0)
-        {
-            ProgressValueTextBlock.Text = "100% completado · ya hay horas extra";
-        }
-        else
-        {
-            ProgressValueTextBlock.Text = $"{progressPercentage:0}% completado";
         }
     }
 
@@ -226,13 +219,20 @@ public partial class MainWindow : Window
         }
 
         return summary.Movements
-            .Select(m => $"{m.Timestamp:HH:mm:ss} · {m.Type}")
+            .Select(BuildMovementLine)
             .ToList();
     }
 
-    private int GetExpectedDailySeconds()
+    private static string BuildMovementLine(FichajeMovementDto movement)
     {
-        return (int)Math.Round(_loggedUser.ExpectedDailyHours * 3600m);
+        var baseText = $"{movement.Timestamp:HH:mm:ss} · {movement.Type}";
+
+        if (string.IsNullOrWhiteSpace(movement.Comment))
+        {
+            return baseText;
+        }
+
+        return $"{baseText}\nComentario: {movement.Comment}";
     }
 
     private void SetBusyState(bool isBusy)
@@ -279,13 +279,6 @@ public partial class MainWindow : Window
     {
         var time = TimeSpan.FromSeconds(workedSeconds);
         return $"{time:hh\\:mm\\:ss}";
-    }
-
-    private static string FormatOptionalTimestamp(DateTime? value, string emptyMessage)
-    {
-        return value.HasValue
-            ? value.Value.ToString("dd/MM/yyyy HH:mm:ss")
-            : emptyMessage;
     }
 
     private static SolidColorBrush CreateBrush(string hexColor)
