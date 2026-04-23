@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 using FichajeDeEmpresa.App.Configuration;
 using FichajeDeEmpresa.App.Dialogs;
 using FichajeDeEmpresa.App.Services;
@@ -15,6 +16,7 @@ public partial class MainWindow : Window
 {
     private readonly LoginResponseDto _loggedUser;
     private readonly ApiClient _apiClient = new();
+    private readonly DispatcherTimer _liveTimer;
 
     private readonly Brush _workingTextBrush = CreateBrush("#1E6B3A");
     private readonly Brush _workingBackgroundBrush = CreateBrush("#E8F7EE");
@@ -36,7 +38,13 @@ public partial class MainWindow : Window
     private readonly Brush _extraMetricBrush = CreateBrush("#B26A00");
 
     private bool _isBusy;
+    private bool _isLoadingSummary;
     private DaySummaryDto _currentSummary = new();
+
+    private int _workedSecondsAtLastSync;
+    private DateTime _lastSyncLocalTime;
+    private DateTime _lastAutoSyncUtc;
+    private DateTime _loadedSummaryDate;
 
     public MainWindow(LoginResponseDto loggedUser)
     {
@@ -46,15 +54,46 @@ public partial class MainWindow : Window
 
         WindowState = WindowState.Maximized;
 
+        _liveTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromSeconds(1)
+        };
+        _liveTimer.Tick += LiveTimer_Tick;
+
         LoadUserData();
         ShowMessage(string.Empty, false);
+
         Loaded += MainWindow_Loaded;
+        Closed += MainWindow_Closed;
     }
 
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         WindowState = WindowState.Maximized;
-        await LoadTodaySummaryAsync();
+        _liveTimer.Start();
+        await LoadTodaySummaryAsync(showError: true, showSuccess: false, useBusyState: true);
+    }
+
+    private void MainWindow_Closed(object? sender, EventArgs e)
+    {
+        _liveTimer.Stop();
+    }
+
+    private async void LiveTimer_Tick(object? sender, EventArgs e)
+    {
+        UpdateLiveMetrics();
+
+        if (_loadedSummaryDate != DateTime.Today)
+        {
+            await LoadTodaySummaryAsync(showError: false, showSuccess: false, useBusyState: false);
+            return;
+        }
+
+        if (_currentSummary.IsWorking &&
+            DateTime.UtcNow - _lastAutoSyncUtc >= TimeSpan.FromSeconds(30))
+        {
+            await LoadTodaySummaryAsync(showError: false, showSuccess: false, useBusyState: false);
+        }
     }
 
     private async void EntryButton_Click(object sender, RoutedEventArgs e)
@@ -65,11 +104,6 @@ public partial class MainWindow : Window
     private async void ExitButton_Click(object sender, RoutedEventArgs e)
     {
         await RegisterFichajeWithOptionalCommentAsync(isEntry: false);
-    }
-
-    private async void RefreshButton_Click(object sender, RoutedEventArgs e)
-    {
-        await LoadTodaySummaryAsync();
     }
 
     private void ChangeUserButton_Click(object sender, RoutedEventArgs e)
@@ -98,23 +132,45 @@ public partial class MainWindow : Window
         DailyTargetValueTextBlock.Text = $"{_loggedUser.ExpectedDailyHours:0.##} horas/día";
     }
 
-    private async Task LoadTodaySummaryAsync()
+    private async Task LoadTodaySummaryAsync(bool showError, bool showSuccess, bool useBusyState)
     {
-        ShowMessage(string.Empty, false);
-        SetBusyState(true);
+        if (_isLoadingSummary)
+        {
+            return;
+        }
+
+        _isLoadingSummary = true;
+
+        if (useBusyState)
+        {
+            SetBusyState(true);
+        }
 
         var result = await _apiClient.GetTodaySummaryAsync(_loggedUser.UserId);
 
-        SetBusyState(false);
+        if (useBusyState)
+        {
+            SetBusyState(false);
+        }
+
+        _isLoadingSummary = false;
 
         if (!result.IsSuccess || result.Summary is null)
         {
-            ShowMessage(result.Message, true);
+            if (showError)
+            {
+                ShowMessage(result.Message, true);
+            }
+
             return;
         }
 
         ApplySummary(result.Summary);
-        ShowMessage("Resumen del día cargado correctamente.", false);
+
+        if (showSuccess && !string.IsNullOrWhiteSpace(result.Message))
+        {
+            ShowMessage(result.Message, false);
+        }
     }
 
     private async Task RegisterFichajeWithOptionalCommentAsync(bool isEntry)
@@ -164,16 +220,40 @@ public partial class MainWindow : Window
     private void ApplySummary(DaySummaryDto summary)
     {
         _currentSummary = summary;
+        _workedSecondsAtLastSync = summary.WorkedSecondsToday;
+        _lastSyncLocalTime = DateTime.Now;
+        _lastAutoSyncUtc = DateTime.UtcNow;
+        _loadedSummaryDate = DateTime.Today;
 
         ApplyStatus(summary.IsWorking);
+        UpdateLiveMetrics();
 
-        WorkedTodayValueTextBlock.Text = FormatWorkedTime(summary.WorkedSecondsToday);
-        NormalHoursValueTextBlock.Text = FormatWorkedTime(summary.NormalSecondsToday);
+        MovementsListBox.ItemsSource = BuildMovementLines(summary);
 
-        if (summary.ExtraSecondsToday > 0)
+        UpdateButtons();
+    }
+
+    private void UpdateLiveMetrics()
+    {
+        var workedSeconds = _workedSecondsAtLastSync;
+
+        if (_currentSummary.IsWorking)
+        {
+            var extraSecondsSinceLastSync = (int)Math.Max(0, (DateTime.Now - _lastSyncLocalTime).TotalSeconds);
+            workedSeconds += extraSecondsSinceLastSync;
+        }
+
+        var expectedDailySeconds = (int)Math.Max(0, Math.Round(_loggedUser.ExpectedDailyHours * 3600m));
+        var normalSeconds = Math.Min(workedSeconds, expectedDailySeconds);
+        var extraSeconds = Math.Max(0, workedSeconds - expectedDailySeconds);
+
+        WorkedTodayValueTextBlock.Text = FormatWorkedTime(workedSeconds);
+        NormalHoursValueTextBlock.Text = FormatWorkedTime(normalSeconds);
+
+        if (extraSeconds > 0)
         {
             ExtraHoursCardBorder.Visibility = Visibility.Visible;
-            ExtraHoursValueTextBlock.Text = FormatWorkedTime(summary.ExtraSecondsToday);
+            ExtraHoursValueTextBlock.Text = FormatWorkedTime(extraSeconds);
             ExtraHoursValueTextBlock.Foreground = _extraMetricBrush;
             ExtraHoursHintTextBlock.Text = "Hay horas extra registradas hoy.";
             ExtraHoursHintTextBlock.Foreground = _extraMetricBrush;
@@ -184,10 +264,6 @@ public partial class MainWindow : Window
             ExtraHoursValueTextBlock.Text = "00:00:00";
             ExtraHoursValueTextBlock.Foreground = _defaultMetricBrush;
         }
-
-        MovementsListBox.ItemsSource = BuildMovementLines(summary);
-
-        UpdateButtons();
     }
 
     private void ApplyStatus(bool isWorking)
@@ -238,7 +314,6 @@ public partial class MainWindow : Window
     private void SetBusyState(bool isBusy)
     {
         _isBusy = isBusy;
-        RefreshButton.IsEnabled = !isBusy;
         ChangeUserButton.IsEnabled = !isBusy;
         UpdateButtons();
     }

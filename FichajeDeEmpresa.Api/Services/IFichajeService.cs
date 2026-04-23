@@ -1,14 +1,22 @@
-using FichajeDeEmpresa.Shared.Contracts.Fichajes;
+namespace FichajeDeEmpresa.Shared.Contracts.Fichajes;
 
-namespace FichajeDeEmpresa.Api.Services;
-
-public interface IFichajeService
+public class DaySummaryDto
 {
-    Task<FichajeOperationResponseDto> RegisterEntryAsync(RegisterFichajeRequestDto request);
+    public int UserId { get; set; }
 
-    Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request);
+    public bool IsWorking { get; set; }
 
-    Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId);
+    public bool IsPaused { get; set; }
 
-    Task<AdminFichajeHistoryResponseDto> GetHistoryAsync(int? userId, DateTime? fromDate, DateTime? toDate);
+    public DateTime? LastEntryTime { get; set; }
+
+    public DateTime? LastExitTime { get; set; }
+
+    public int WorkedSecondsToday { get; set; }
+
+    public int NormalSecondsToday { get; set; }
+
+    public int ExtraSecondsToday { get; set; }
+
+    public List<FichajeMovementDto> Movements { get; set; } = [];
 }
