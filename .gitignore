@@ -1,90 +1,16 @@
-
-# Node / Electron
-node_modules/
-**/node_modules/
-
-# Builds
+﻿node_modules/
 dist/
-out/
-build/
-release/
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Variables locales
+.vite/
+.runtime/
 .env
-.env.*
-!.env.example
 
-# Sistema
+*.log
+*.db-shm
+*.db-wal
+*.sqlite-shm
+*.sqlite-wal
+
 .DS_Store
 Thumbs.db
 
-# Node / Electron
-node_modules/
-**/node_modules/
-
-# Variables locales
-.env
-.env.*
-!.env.example
-
-# Builds
-dist/
-out/
-build/
-release/
-
-# Logs
-*.log
-npm-debug.log*
-
-# Sistema
-.DS_Store
-Thumbs.db
-
-# Node dependencies
-node_modules/
-**/node_modules/
-
-# Builds generados
-**/dist/
-**/build/
-**/out/
-**/release/
-**/.vite/
-**/.cache/
-
-# Electron runtime/temp
-**/.runtime/
-
-# Logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*
-
-# Variables privadas
-.env
-**/.env
-!.env.example
-**/.env.local
-**/.env.*.local
-
-# Bases de datos locales
-*.sqlite
-*.sqlite-*
-*.db
-*.db-*
-**/data.sqlite
-**/database.sqlite
-
-# Sistema / editor
-.DS_Store
-Thumbs.db
-.vscode/
-
+*.zip
