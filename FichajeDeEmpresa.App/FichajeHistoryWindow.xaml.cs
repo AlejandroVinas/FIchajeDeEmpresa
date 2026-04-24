@@ -1,8 +1,9 @@
+using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using FichajeDeEmpresa.App.Services;
 using FichajeDeEmpresa.Shared.Contracts.Fichajes;
-using FichajeDeEmpresa.Shared.Contracts.Users;
 
 namespace FichajeDeEmpresa.App;
 
@@ -43,6 +44,21 @@ public partial class FichajeHistoryWindow : Window
     private async void SearchButton_Click(object sender, RoutedEventArgs e)
     {
         await LoadHistoryAsync();
+    }
+
+    private void ViewDetailButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button button || button.Tag is not AdminFichajeHistoryDayDto day)
+        {
+            return;
+        }
+
+        var detailWindow = new FichajeHistoryDayDetailWindow(day)
+        {
+            Owner = this
+        };
+
+        detailWindow.ShowDialog();
     }
 
     private async Task LoadUsersForFilterAsync()
@@ -110,7 +126,7 @@ public partial class FichajeHistoryWindow : Window
         }
 
         var items = result.Days
-            .Select(BuildDisplayItem)
+            .Select(BuildDayListItem)
             .ToList();
 
         HistoryListBox.ItemsSource = items;
@@ -125,44 +141,17 @@ public partial class FichajeHistoryWindow : Window
             $"Horas extra totales: {FormatWorkedTime(totalExtraSeconds)}";
     }
 
-    private static AdminHistoryDisplayItem BuildDisplayItem(AdminFichajeHistoryDayDto day)
+    private static AdminHistoryDayListItem BuildDayListItem(AdminFichajeHistoryDayDto day)
     {
-        var summary =
-            $"Usuario: {day.FullName} ({day.UserName}) · " +
-            $"Fecha: {day.Date:dd/MM/yyyy} · " +
-            $"Trabajado: {FormatWorkedTime(day.WorkedSeconds)} · " +
-            $"Normales: {FormatWorkedTime(day.NormalSeconds)} · " +
-            $"Extra: {FormatWorkedTime(day.ExtraSeconds)}";
-
-        if (day.IsWorking)
+        return new AdminHistoryDayListItem
         {
-            summary += " · Jornada abierta";
-        }
-
-        var movements = day.Movements.Count == 0
-            ? new List<AdminHistoryMovementDisplayItem>
-            {
-                new()
-                {
-                    TimeText = "--:--:--",
-                    TypeText = "Sin movimientos",
-                    CommentText = "No hay movimientos registrados en esta jornada."
-                }
-            }
-            : day.Movements
-                .Select(m => new AdminHistoryMovementDisplayItem
-                {
-                    TimeText = m.Timestamp.ToString("HH:mm:ss"),
-                    TypeText = m.Type,
-                    CommentText = string.IsNullOrWhiteSpace(m.Comment) ? null : m.Comment
-                })
-                .ToList();
-
-        return new AdminHistoryDisplayItem
-        {
-            Title = $"{day.Date:dd/MM/yyyy} · {day.FullName}",
-            Summary = summary,
-            Movements = movements
+            DateText = day.Date.ToString("dd/MM/yyyy"),
+            UserText = $"{day.FullName} ({day.UserName})",
+            WorkedText = FormatWorkedTime(day.WorkedSeconds),
+            ExtraText = FormatWorkedTime(day.ExtraSeconds),
+            StatusText = GetStatusText(day),
+            MovementsText = $"{day.Movements.Count} movimientos",
+            DayData = day
         };
     }
 
@@ -221,6 +210,21 @@ public partial class FichajeHistoryWindow : Window
 
         MessageBorder.Visibility = Visibility.Visible;
         MessageTextBlock.Text = message;
+    }
+
+    private static string GetStatusText(AdminFichajeHistoryDayDto day)
+    {
+        if (day.IsWorking)
+        {
+            return "Trabajando";
+        }
+
+        if (day.IsPaused)
+        {
+            return "En pausa";
+        }
+
+        return "Cerrado";
     }
 
     private static string FormatWorkedTime(int workedSeconds)

@@ -1,6 +1,6 @@
 using System;
 using System.Windows;
-using System.Windows.Input;
+using System.Windows.Media;
 using FichajeDeEmpresa.App.Configuration;
 using FichajeDeEmpresa.App.Services;
 using FichajeDeEmpresa.Shared.Contracts.Auth;
@@ -14,49 +14,46 @@ public partial class LoginWindow : Window
     public LoginWindow()
     {
         InitializeComponent();
-        ApplyBranding();
-        Loaded += LoginWindow_Loaded;
+        LoadBranding();
+        ShowStatus(string.Empty, false);
     }
 
-    private void ApplyBranding()
+    private void LoadBranding()
     {
         Title = $"{BrandingConfiguration.CompanyLegalName} - Inicio de sesión";
+
         CompanyNameTextBlock.Text = BrandingConfiguration.CompanyLegalName;
         BrandNameTextBlock.Text = BrandingConfiguration.BrandDisplayName;
-        WelcomeMessageTextBlock.Text = BrandingConfiguration.LoginWelcomeMessage;
-    }
-
-    private void LoginWindow_Loaded(object sender, RoutedEventArgs e)
-    {
-        UserNameTextBox.Focus();
+        WelcomeMessageTextBlock.Text = BrandingConfiguration.MainWelcomeMessage;
     }
 
     private async void LoginButton_Click(object sender, RoutedEventArgs e)
     {
-        await ExecuteLoginAsync();
-    }
+        var userName = UserNameTextBox.Text.Trim();
+        var password = PasswordBox.Password;
 
-    private async void PasswordBox_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter)
+        if (string.IsNullOrWhiteSpace(userName))
         {
-            await ExecuteLoginAsync();
+            ShowStatus("Debes introducir el usuario.", true);
+            UserNameTextBox.Focus();
+            return;
         }
-    }
 
-    private async Task ExecuteLoginAsync()
-    {
-        ShowStatus(string.Empty, false);
-
-        var request = new LoginRequestDto
+        if (string.IsNullOrWhiteSpace(password))
         {
-            UserName = UserNameTextBox.Text.Trim(),
-            Password = PasswordBox.Password
-        };
+            ShowStatus("Debes introducir la contraseña.", true);
+            PasswordBox.Focus();
+            return;
+        }
 
         SetBusyState(true);
+        ShowStatus("Validando acceso...", false);
 
-        var result = await _apiClient.LoginAsync(request);
+        var result = await _apiClient.LoginAsync(new LoginRequestDto
+        {
+            UserName = userName,
+            Password = password
+        });
 
         SetBusyState(false);
 
@@ -66,54 +63,58 @@ public partial class LoginWindow : Window
             return;
         }
 
-        Window nextWindow = IsAdminRole(result.Role)
+        ShowStatus("Acceso correcto.", false);
+
+        Window nextWindow = string.Equals(result.Role, "Admin", StringComparison.OrdinalIgnoreCase)
             ? new AdminWindow(result)
             : new MainWindow(result);
 
         Application.Current.MainWindow = nextWindow;
         nextWindow.Show();
-
         Close();
     }
 
     private void SetBusyState(bool isBusy)
     {
-        LoginButton.IsEnabled = !isBusy;
         UserNameTextBox.IsEnabled = !isBusy;
         PasswordBox.IsEnabled = !isBusy;
-
-        LoginButton.Content = isBusy ? "Conectando..." : "Iniciar sesión";
+        LoginButton.IsEnabled = !isBusy;
+        LoginButton.Content = isBusy ? "Validando..." : "Iniciar sesión";
     }
 
     private void ShowStatus(string message, bool isError)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
-            StatusBorder.Visibility = Visibility.Collapsed;
             StatusTextBlock.Text = string.Empty;
+            StatusBorder.Visibility = Visibility.Collapsed;
             return;
         }
 
-        StatusBorder.Visibility = Visibility.Visible;
         StatusTextBlock.Text = message;
+        StatusBorder.Visibility = Visibility.Visible;
 
         if (isError)
         {
-            StatusBorder.Background = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#FDECEC")!;
-            StatusBorder.BorderBrush = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F2B8B5")!;
-            StatusTextBlock.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#9F1239")!;
+            StatusBorder.Background = GetBrush("DangerBackgroundBrush", "#FDECEC");
+            StatusBorder.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
+            StatusTextBlock.Foreground = GetBrush("DangerBrush", "#A33A3A");
         }
         else
         {
-            StatusBorder.Background = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#EEF6FF")!;
-            StatusBorder.BorderBrush = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#BFD7FF")!;
-            StatusTextBlock.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#1D4F91")!;
+            StatusBorder.Background = GetBrush("InfoBackgroundBrush", "#FFF8E1");
+            StatusBorder.BorderBrush = GetBrush("InfoBorderBrush", "#E8D089");
+            StatusTextBlock.Foreground = GetBrush("InfoBrush", "#7B5B12");
         }
     }
 
-    private static bool IsAdminRole(string? role)
+    private Brush GetBrush(string resourceKey, string fallbackHex)
     {
-        return !string.IsNullOrWhiteSpace(role) &&
-               role.Equals("Admin", StringComparison.OrdinalIgnoreCase);
+        if (TryFindResource(resourceKey) is Brush brush)
+        {
+            return brush;
+        }
+
+        return (Brush)new BrushConverter().ConvertFromString(fallbackHex)!;
     }
 }

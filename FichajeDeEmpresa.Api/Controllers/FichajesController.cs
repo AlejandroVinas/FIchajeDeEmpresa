@@ -28,6 +28,32 @@ public class FichajesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("pausa")]
+    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterPauseAsync([FromBody] RegisterFichajeRequestDto request)
+    {
+        var result = await _fichajeService.RegisterPauseAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("reanudar")]
+    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterResumeAsync([FromBody] RegisterFichajeRequestDto request)
+    {
+        var result = await _fichajeService.RegisterResumeAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpPost("salida")]
     public async Task<ActionResult<FichajeOperationResponseDto>> RegisterExitAsync([FromBody] RegisterFichajeRequestDto request)
     {

@@ -1,21 +1,13 @@
 using System.Windows;
 using System.Windows.Media;
 using FichajeDeEmpresa.App.Services;
+using FichajeDeEmpresa.Shared.Contracts.Users;
 
 namespace FichajeDeEmpresa.App;
 
 public partial class UsersWindow : Window
 {
     private readonly ApiClient _apiClient = new();
-
-    private readonly Brush _successMessageBackgroundBrush = CreateBrush("#EEF6FF");
-    private readonly Brush _successMessageBorderBrush = CreateBrush("#BFD7FF");
-    private readonly Brush _successMessageTextBrush = CreateBrush("#1D4F91");
-
-    private readonly Brush _errorMessageBackgroundBrush = CreateBrush("#FDECEC");
-    private readonly Brush _errorMessageBorderBrush = CreateBrush("#F2B8B5");
-    private readonly Brush _errorMessageTextBrush = CreateBrush("#9F1239");
-
     private bool _isBusy;
 
     public UsersWindow()
@@ -36,24 +28,41 @@ public partial class UsersWindow : Window
 
     private async void OpenCreateUserButton_Click(object sender, RoutedEventArgs e)
     {
-        var window = new CreateUserWindow
+        var createWindow = new CreateUserWindow
         {
             Owner = this
         };
 
-        var result = window.ShowDialog();
+        createWindow.ShowDialog();
+        await LoadUsersAsync();
+    }
+
+    private async void EditSelectedUserButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (UsersListBox.SelectedItem is not UserSummaryDto selectedUser)
+        {
+            ShowMessage("Selecciona un usuario para editarlo.", true);
+            return;
+        }
+
+        var editWindow = new EditUserWindow(selectedUser)
+        {
+            Owner = this
+        };
+
+        var result = editWindow.ShowDialog();
 
         if (result == true)
         {
             await LoadUsersAsync();
-            ShowMessage("Usuario creado correctamente.", false);
+            ShowMessage("Usuario actualizado correctamente.", false);
         }
     }
 
     private async Task LoadUsersAsync()
     {
-        ShowMessage(string.Empty, false);
         SetBusyState(true);
+        ShowMessage(string.Empty, false);
 
         var result = await _apiClient.GetUsersAsync();
 
@@ -78,6 +87,8 @@ public partial class UsersWindow : Window
         _isBusy = isBusy;
         RefreshButton.IsEnabled = !isBusy;
         OpenCreateUserButton.IsEnabled = !isBusy;
+        EditSelectedUserButton.IsEnabled = !isBusy;
+        UsersListBox.IsEnabled = !isBusy;
     }
 
     private void ShowMessage(string message, bool isError)
@@ -94,20 +105,25 @@ public partial class UsersWindow : Window
 
         if (isError)
         {
-            MessageBorder.Background = _errorMessageBackgroundBrush;
-            MessageBorder.BorderBrush = _errorMessageBorderBrush;
-            MessageTextBlock.Foreground = _errorMessageTextBrush;
+            MessageBorder.Background = GetBrush("DangerBackgroundBrush", "#FDECEC");
+            MessageBorder.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
+            MessageTextBlock.Foreground = GetBrush("DangerBrush", "#A33A3A");
         }
         else
         {
-            MessageBorder.Background = _successMessageBackgroundBrush;
-            MessageBorder.BorderBrush = _successMessageBorderBrush;
-            MessageTextBlock.Foreground = _successMessageTextBrush;
+            MessageBorder.Background = GetBrush("InfoBackgroundBrush", "#FFF8E1");
+            MessageBorder.BorderBrush = GetBrush("InfoBorderBrush", "#E8D089");
+            MessageTextBlock.Foreground = GetBrush("InfoBrush", "#7B5B12");
         }
     }
 
-    private static SolidColorBrush CreateBrush(string hexColor)
+    private Brush GetBrush(string resourceKey, string fallbackHex)
     {
-        return (SolidColorBrush)new BrushConverter().ConvertFromString(hexColor)!;
+        if (TryFindResource(resourceKey) is Brush brush)
+        {
+            return brush;
+        }
+
+        return (Brush)new BrushConverter().ConvertFromString(fallbackHex)!;
     }
 }

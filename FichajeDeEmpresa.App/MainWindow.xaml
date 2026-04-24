@@ -5,106 +5,45 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="HIFLUNECAN S.L. - Control de fichaje"
-        Height="640"
-        Width="1180"
-        MinHeight="620"
-        MinWidth="1060"
+        Height="720"
+        Width="1240"
+        MinHeight="640"
+        MinWidth="980"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResize"
         ShowInTaskbar="True"
         WindowState="Maximized"
-        Background="#EEF2F7">
+        Background="{StaticResource WindowBackgroundBrush}">
 
-    <Window.Resources>
-        <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D9E1EC" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="16" />
-            <Setter Property="Padding" Value="16" />
-        </Style>
-
-        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="18" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#17212B" />
-        </Style>
-
-        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#64748B" />
-        </Style>
-
-        <Style x:Key="FieldValueStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#17212B" />
-        </Style>
-
-        <Style x:Key="MetricLabelStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="12" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="#64748B" />
-        </Style>
-
-        <Style x:Key="MetricValueStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="22" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#17212B" />
-        </Style>
-
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="42" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="BorderBrush" Value="#2563EB" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="16,0" />
-            <Setter Property="Margin" Value="0,0,10,0" />
-        </Style>
-
-        <Style x:Key="SuccessButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Background" Value="#15803D" />
-            <Setter Property="BorderBrush" Value="#15803D" />
-        </Style>
-
-        <Style x:Key="SecondaryOutlineButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Foreground" Value="#0F172A" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#CBD5E1" />
-            <Setter Property="Margin" Value="0" />
-        </Style>
-    </Window.Resources>
-
-    <Grid Margin="16">
+    <Grid Margin="18">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="14" />
+            <RowDefinition Height="16" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- CABECERA -->
         <Border Grid.Row="0"
-                Style="{StaticResource CardBorderStyle}"
-                Padding="16">
+                Style="{StaticResource AppCardBorderStyle}"
+                Padding="22">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="18" />
-                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="290" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0"
-                        Width="84"
-                        Height="64"
-                        CornerRadius="12"
-                        Background="#FFF8E1"
-                        Padding="8"
+                        Width="96"
+                        Height="76"
+                        CornerRadius="16"
+                        Background="{StaticResource InfoBackgroundBrush}"
+                        BorderBrush="{StaticResource InfoBorderBrush}"
+                        BorderThickness="1"
+                        Padding="10"
                         VerticalAlignment="Center">
                     <Image Source="pack://application:,,,/Assets/Images/hiflunecan.png"
                            Stretch="Uniform" />
@@ -113,281 +52,285 @@
                 <StackPanel Grid.Column="2"
                             VerticalAlignment="Center">
                     <TextBlock x:Name="HeaderCompanyNameTextBlock"
-                               FontSize="24"
+                               FontSize="28"
                                FontWeight="Bold"
-                               Foreground="#0F172A" />
+                               Foreground="{StaticResource TextPrimaryBrush}" />
 
                     <TextBlock x:Name="HeaderBrandTextBlock"
-                               Margin="0,2,0,0"
-                               FontSize="16"
-                               FontWeight="SemiBold"
-                               Foreground="#475569" />
-
-                    <TextBlock x:Name="WelcomeTextBlock"
-                               Margin="0,10,0,4"
+                               Margin="0,4,0,0"
                                FontSize="17"
                                FontWeight="SemiBold"
-                               Foreground="#1E293B"
+                               Foreground="{StaticResource BrandPrimaryDarkBrush}" />
+
+                    <TextBlock x:Name="WelcomeTextBlock"
+                               Margin="0,12,0,4"
+                               FontSize="19"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimaryBrush}"
                                Text="Bienvenido/a" />
 
                     <TextBlock x:Name="HeaderWelcomeMessageTextBlock"
                                FontSize="13"
-                               Foreground="#64748B"
+                               Foreground="{StaticResource TextSecondaryBrush}"
                                TextWrapping="Wrap" />
                 </StackPanel>
 
                 <Border Grid.Column="4"
-                        Background="#F8FAFC"
-                        BorderBrush="#D9E1EC"
-                        BorderThickness="1"
-                        CornerRadius="14"
-                        Padding="14">
+                        Style="{StaticResource AppSoftCardBorderStyle}"
+                        Padding="16">
                     <StackPanel>
                         <TextBlock Text="Sesión actual"
                                    FontSize="12"
                                    FontWeight="SemiBold"
-                                   Foreground="#64748B"
+                                   Foreground="{StaticResource TextMutedBrush}"
                                    Margin="0,0,0,8" />
 
                         <TextBlock x:Name="SessionUserNameTextBlock"
-                                   FontSize="16"
+                                   FontSize="17"
                                    FontWeight="Bold"
-                                   Foreground="#0F172A" />
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
 
                         <TextBlock x:Name="SessionRoleTextBlock"
-                                   Margin="0,4,0,0"
+                                   Margin="0,5,0,0"
                                    FontSize="13"
-                                   Foreground="#334155" />
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
 
                         <TextBlock x:Name="SessionDailyHoursTextBlock"
                                    Margin="0,3,0,0"
                                    FontSize="13"
-                                   Foreground="#334155" />
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
 
                         <Button x:Name="ChangeUserButton"
-                                Margin="0,12,0,0"
-                                Width="150"
-                                Content="Cambiar usuario"
+                                Width="155"
+                                Margin="0,16,0,0"
                                 HorizontalAlignment="Left"
-                                Style="{StaticResource SecondaryOutlineButtonStyle}"
+                                Content="Cambiar usuario"
+                                Style="{StaticResource AppSecondaryButtonStyle}"
                                 Click="ChangeUserButton_Click" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
+        <!-- CUERPO -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.45*" />
-                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="16" />
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <Border Grid.Column="0"
-                    Style="{StaticResource CardBorderStyle}">
+            <!-- COLUMNA IZQUIERDA -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="16" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="16" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- RESUMEN -->
+                <Border Grid.Row="0"
+                        Style="{StaticResource AppCardBorderStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="16" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Grid.Row="0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Tu jornada de hoy"
+                                           Style="{StaticResource AppSectionTitleStyle}" />
+                                <TextBlock Margin="0,6,0,0"
+                                           Text="Consulta tu estado actual y el tiempo trabajado."
+                                           FontSize="13"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1"
+                                        HorizontalAlignment="Right"
+                                        VerticalAlignment="Top">
+                                <TextBlock Text="Estado"
+                                           Style="{StaticResource AppFieldLabelStyle}" />
+                                <Border x:Name="StatusBadgeBorder"
+                                        Margin="0,8,0,0"
+                                        Padding="12,6"
+                                        CornerRadius="999"
+                                        HorizontalAlignment="Left"
+                                        Background="{StaticResource DangerBackgroundBrush}"
+                                        BorderBrush="{StaticResource DangerBorderBrush}"
+                                        BorderThickness="1">
+                                    <TextBlock x:Name="StatusBadgeTextBlock"
+                                               Text="FUERA"
+                                               FontSize="12"
+                                               FontWeight="Bold"
+                                               Foreground="{StaticResource DangerBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0"
+                                    Style="{StaticResource AppSoftCardBorderStyle}"
+                                    MinHeight="128">
+                                <StackPanel>
+                                    <TextBlock Text="Tiempo trabajado"
+                                               Style="{StaticResource AppMetricLabelStyle}" />
+                                    <TextBlock x:Name="WorkedTodayValueTextBlock"
+                                               Margin="0,16,0,0"
+                                               Text="00:00:00"
+                                               Style="{StaticResource AppMetricValueStyle}" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2"
+                                    x:Name="ExtraHoursCardBorder"
+                                    Style="{StaticResource AppSoftCardBorderStyle}"
+                                    MinHeight="128"
+                                    Visibility="Collapsed">
+                                <StackPanel>
+                                    <TextBlock Text="Horas extra"
+                                               Style="{StaticResource AppMetricLabelStyle}" />
+                                    <TextBlock x:Name="ExtraHoursValueTextBlock"
+                                               Margin="0,16,0,0"
+                                               Text="00:00:00"
+                                               Style="{StaticResource AppMetricValueStyle}" />
+                                    <TextBlock x:Name="ExtraHoursHintTextBlock"
+                                               Margin="0,8,0,0"
+                                               FontSize="12"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               TextWrapping="Wrap"
+                                               Text="Hay horas extra hoy." />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- ACCIONES -->
+                <Border Grid.Row="2"
+                        Style="{StaticResource AppCardBorderStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="16" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="16" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0">
+                            <TextBlock Text="Acciones rápidas"
+                                       Style="{StaticResource AppSectionTitleStyle}" />
+                            <TextBlock Margin="0,6,0,0"
+                                       Text="Registra entrada, pausa, reanudación o salida."
+                                       FontSize="13"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
+
+                        <WrapPanel Grid.Row="2"
+                                   Margin="0,0,0,0">
+                            <Button x:Name="EntryButton"
+                                    Margin="0,0,10,10"
+                                    Content="Fichar entrada"
+                                    Style="{StaticResource AppSuccessButtonStyle}"
+                                    Click="EntryButton_Click" />
+
+                            <Button x:Name="PauseResumeButton"
+                                    Margin="0,0,10,10"
+                                    Content="Pausar"
+                                    Style="{StaticResource AppWarningButtonStyle}"
+                                    Click="PauseResumeButton_Click" />
+
+                            <Button x:Name="ExitButton"
+                                    Margin="0,0,10,10"
+                                    Content="Fichar salida"
+                                    Style="{StaticResource AppDangerButtonStyle}"
+                                    Click="ExitButton_Click" />
+                        </WrapPanel>
+
+                        <Border Grid.Row="4"
+                                Style="{StaticResource AppSoftCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Objetivo diario"
+                                           Style="{StaticResource AppFieldLabelStyle}" />
+                                <TextBlock x:Name="DailyTargetValueTextBlock"
+                                           Margin="0,6,0,0"
+                                           Style="{StaticResource AppFieldValueStyle}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- MENSAJES -->
+                <Border Grid.Row="4"
+                        x:Name="MessageBorder"
+                        Style="{StaticResource AppCardBorderStyle}"
+                        Padding="14"
+                        Background="{StaticResource InfoBackgroundBrush}"
+                        BorderBrush="{StaticResource InfoBorderBrush}"
+                        BorderThickness="1"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="MessageTextBlock"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource InfoBrush}"
+                               TextWrapping="Wrap" />
+                </Border>
+            </Grid>
+
+            <!-- COLUMNA DERECHA -->
+            <Border Grid.Column="2"
+                    Style="{StaticResource AppCardBorderStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="12" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
-                        <StackPanel Grid.Column="0">
-                            <TextBlock Text="Tu jornada de hoy"
-                                       Style="{StaticResource SectionTitleStyle}" />
-                            <TextBlock Margin="0,6,0,0"
-                                       Text="Estado, tiempo trabajado y acciones del día."
-                                       FontSize="13"
-                                       Foreground="#64748B" />
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1"
-                                    HorizontalAlignment="Right">
-                            <TextBlock Text="Estado"
-                                       Style="{StaticResource FieldLabelStyle}" />
-                            <Border x:Name="StatusBadgeBorder"
-                                    Margin="0,8,0,0"
-                                    Padding="10,5"
-                                    CornerRadius="999"
-                                    HorizontalAlignment="Left"
-                                    Background="#FDECEC"
-                                    BorderBrush="#F2B8B5"
-                                    BorderThickness="1">
-                                <TextBlock x:Name="StatusBadgeTextBlock"
-                                           Text="FUERA"
-                                           FontSize="12"
-                                           FontWeight="Bold"
-                                           Foreground="#A33A3A" />
-                            </Border>
-                        </StackPanel>
-                    </Grid>
-
-                    <WrapPanel Grid.Row="2"
-                               ItemWidth="215"
-                               ItemHeight="110">
-                        <Border Background="#F8FAFC"
-                                BorderBrush="#E2E8F0"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="14"
-                                Width="215"
-                                Height="110"
-                                Margin="0,0,10,0">
-                            <StackPanel>
-                                <TextBlock Text="Tiempo trabajado"
-                                           Style="{StaticResource MetricLabelStyle}" />
-                                <TextBlock x:Name="WorkedTodayValueTextBlock"
-                                           Margin="0,10,0,0"
-                                           Text="00:00:00"
-                                           Style="{StaticResource MetricValueStyle}" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border Background="#F8FAFC"
-                                BorderBrush="#E2E8F0"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="14"
-                                Width="215"
-                                Height="110"
-                                Margin="0,0,10,0">
-                            <StackPanel>
-                                <TextBlock Text="Horas normales"
-                                           Style="{StaticResource MetricLabelStyle}" />
-                                <TextBlock x:Name="NormalHoursValueTextBlock"
-                                           Margin="0,10,0,0"
-                                           Text="00:00:00"
-                                           Style="{StaticResource MetricValueStyle}" />
-                            </StackPanel>
-                        </Border>
-
-                        <Border x:Name="ExtraHoursCardBorder"
-                                Background="#F8FAFC"
-                                BorderBrush="#E2E8F0"
-                                BorderThickness="1"
-                                CornerRadius="12"
-                                Padding="14"
-                                Width="215"
-                                Height="110"
-                                Visibility="Collapsed">
-                            <StackPanel>
-                                <TextBlock Text="Horas extra"
-                                           Style="{StaticResource MetricLabelStyle}" />
-                                <TextBlock x:Name="ExtraHoursValueTextBlock"
-                                           Margin="0,10,0,0"
-                                           Text="00:00:00"
-                                           Style="{StaticResource MetricValueStyle}" />
-                                <TextBlock x:Name="ExtraHoursHintTextBlock"
-                                           Margin="0,8,0,0"
-                                           FontSize="12"
-                                           Foreground="#64748B"
-                                           TextWrapping="Wrap"
-                                           Text="Hay horas extra hoy." />
-                            </StackPanel>
-                        </Border>
-                    </WrapPanel>
-
-                    <StackPanel Grid.Row="4">
-                        <TextBlock Text="Acciones rápidas"
-                                   Style="{StaticResource SectionTitleStyle}" />
-
-                        <WrapPanel Margin="0,12,0,0">
-                            <Button x:Name="EntryButton"
-                                    Content="Fichar entrada"
-                                    Width="145"
-                                    Style="{StaticResource SuccessButtonStyle}"
-                                    Click="EntryButton_Click" />
-
-                            <Button x:Name="ExitButton"
-                                    Content="Fichar salida"
-                                    Width="145"
-                                    Style="{StaticResource PrimaryButtonStyle}"
-                                    Click="ExitButton_Click" />
-                        </WrapPanel>
-                    </StackPanel>
-
-                    <Border Grid.Row="6"
-                            Background="#F8FAFC"
-                            BorderBrush="#E2E8F0"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            Padding="14">
-                        <StackPanel>
-                            <TextBlock Text="Objetivo diario"
-                                       Style="{StaticResource FieldLabelStyle}" />
-                            <TextBlock x:Name="DailyTargetValueTextBlock"
-                                       Margin="0,4,0,0"
-                                       Style="{StaticResource FieldValueStyle}" />
-                        </StackPanel>
-                    </Border>
-
-                    <Border Grid.Row="8"
-                            x:Name="MessageBorder"
-                            Padding="12"
-                            CornerRadius="12"
-                            Background="#EEF6FF"
-                            BorderBrush="#BFD7FF"
-                            BorderThickness="1"
-                            Visibility="Collapsed">
-                        <TextBlock x:Name="MessageTextBlock"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   Foreground="#1D4F91"
-                                   TextWrapping="Wrap" />
-                    </Border>
-                </Grid>
-            </Border>
-
-            <Border Grid.Column="2"
-                    Style="{StaticResource CardBorderStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="8" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="14" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Text="Movimientos de hoy"
-                               Style="{StaticResource SectionTitleStyle}" />
+                    <StackPanel Grid.Row="0">
+                        <TextBlock Text="Movimientos de hoy"
+                                   Style="{StaticResource AppSectionTitleStyle}" />
+                        <TextBlock Margin="0,6,0,0"
+                                   Text="Aquí ves tus registros de la jornada actual."
+                                   FontSize="13"
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
+                    </StackPanel>
 
-                    <TextBlock Grid.Row="2"
-                               Text="Aquí ves tu historial del día en orden descendente."
-                               FontSize="13"
-                               Foreground="#64748B"
-                               TextWrapping="Wrap" />
-
-                    <ListBox Grid.Row="4"
+                    <ListBox Grid.Row="2"
                              x:Name="MovementsListBox"
                              BorderThickness="0"
                              Background="Transparent"
-                             SelectionMode="Single">
+                             SelectionMode="Single"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <Border Margin="0,0,0,10"
+                                <Border Margin="0,0,0,8"
                                         Padding="12"
-                                        Background="#F8FAFC"
-                                        BorderBrush="#E2E8F0"
+                                        Background="{StaticResource SoftCardBackgroundBrush}"
+                                        BorderBrush="{StaticResource BorderBrushSoft}"
                                         BorderThickness="1"
                                         CornerRadius="12">
                                     <TextBlock Text="{Binding}"
                                                FontSize="14"
                                                FontWeight="SemiBold"
-                                               Foreground="#1E293B"
+                                               Foreground="{StaticResource TextPrimaryBrush}"
                                                TextWrapping="Wrap" />
                                 </Border>
                             </DataTemplate>

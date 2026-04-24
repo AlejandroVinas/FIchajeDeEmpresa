@@ -1,19 +1,20 @@
+using FichajeDeEmpresa.Shared.Contracts.Fichajes;
+
 namespace FichajeDeEmpresa.App;
 
-public class AdminHistoryDisplayItem
+public class AdminHistoryDayListItem
 {
-    public string Title { get; set; } = string.Empty;
+    public string DateText { get; set; } = string.Empty;
 
-    public string Summary { get; set; } = string.Empty;
+    public string UserText { get; set; } = string.Empty;
 
-    public List<AdminHistoryMovementDisplayItem> Movements { get; set; } = [];
-}
+    public string WorkedText { get; set; } = string.Empty;
 
-public class AdminHistoryMovementDisplayItem
-{
-    public string TimeText { get; set; } = string.Empty;
+    public string ExtraText { get; set; } = string.Empty;
 
-    public string TypeText { get; set; } = string.Empty;
+    public string StatusText { get; set; } = string.Empty;
 
-    public string? CommentText { get; set; }
+    public string MovementsText { get; set; } = string.Empty;
+
+    public AdminFichajeHistoryDayDto DayData { get; set; } = new();
 }

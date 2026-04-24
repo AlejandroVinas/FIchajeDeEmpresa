@@ -22,6 +22,10 @@ public partial class MainWindow : Window
     private readonly Brush _workingBackgroundBrush = CreateBrush("#E8F7EE");
     private readonly Brush _workingBorderBrush = CreateBrush("#9BD3AE");
 
+    private readonly Brush _pausedTextBrush = CreateBrush("#B45309");
+    private readonly Brush _pausedBackgroundBrush = CreateBrush("#FFF7ED");
+    private readonly Brush _pausedBorderBrush = CreateBrush("#F3C58D");
+
     private readonly Brush _outsideTextBrush = CreateBrush("#A33A3A");
     private readonly Brush _outsideBackgroundBrush = CreateBrush("#FDECEC");
     private readonly Brush _outsideBorderBrush = CreateBrush("#F2B8B5");
@@ -98,12 +102,26 @@ public partial class MainWindow : Window
 
     private async void EntryButton_Click(object sender, RoutedEventArgs e)
     {
-        await RegisterFichajeWithOptionalCommentAsync(isEntry: true);
+        await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Entry);
+    }
+
+    private async void PauseResumeButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_currentSummary.IsPaused)
+        {
+            await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Resume);
+            return;
+        }
+
+        if (_currentSummary.IsWorking)
+        {
+            await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Pause);
+        }
     }
 
     private async void ExitButton_Click(object sender, RoutedEventArgs e)
     {
-        await RegisterFichajeWithOptionalCommentAsync(isEntry: false);
+        await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Exit);
     }
 
     private void ChangeUserButton_Click(object sender, RoutedEventArgs e)
@@ -173,9 +191,16 @@ public partial class MainWindow : Window
         }
     }
 
-    private async Task RegisterFichajeWithOptionalCommentAsync(bool isEntry)
+    private async Task RegisterFichajeWithOptionalCommentAsync(UserFichajeAction action)
     {
-        var actionName = isEntry ? "entrada" : "salida";
+        var actionName = action switch
+        {
+            UserFichajeAction.Entry => "entrada",
+            UserFichajeAction.Pause => "pausa",
+            UserFichajeAction.Resume => "reanudar",
+            UserFichajeAction.Exit => "salida",
+            _ => "movimiento"
+        };
 
         var dialog = new FichajeCommentWindow(actionName)
         {
@@ -189,10 +214,10 @@ public partial class MainWindow : Window
             return;
         }
 
-        await RegisterFichajeAsync(isEntry, dialog.CommentText);
+        await RegisterFichajeAsync(action, dialog.CommentText);
     }
 
-    private async Task RegisterFichajeAsync(bool isEntry, string? comment)
+    private async Task RegisterFichajeAsync(UserFichajeAction action, string? comment)
     {
         ShowMessage(string.Empty, false);
         SetBusyState(true);
@@ -203,9 +228,18 @@ public partial class MainWindow : Window
             Comment = comment
         };
 
-        var result = isEntry
-            ? await _apiClient.RegisterEntryAsync(request)
-            : await _apiClient.RegisterExitAsync(request);
+        FichajeOperationResponseDto result = action switch
+        {
+            UserFichajeAction.Entry => await _apiClient.RegisterEntryAsync(request),
+            UserFichajeAction.Pause => await _apiClient.RegisterPauseAsync(request),
+            UserFichajeAction.Resume => await _apiClient.RegisterResumeAsync(request),
+            UserFichajeAction.Exit => await _apiClient.RegisterExitAsync(request),
+            _ => new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "La acción indicada no es válida."
+            }
+        };
 
         SetBusyState(false);
 
@@ -225,7 +259,7 @@ public partial class MainWindow : Window
         _lastAutoSyncUtc = DateTime.UtcNow;
         _loadedSummaryDate = DateTime.Today;
 
-        ApplyStatus(summary.IsWorking);
+        ApplyStatus(summary);
         UpdateLiveMetrics();
 
         MovementsListBox.ItemsSource = BuildMovementLines(summary);
@@ -244,11 +278,9 @@ public partial class MainWindow : Window
         }
 
         var expectedDailySeconds = (int)Math.Max(0, Math.Round(_loggedUser.ExpectedDailyHours * 3600m));
-        var normalSeconds = Math.Min(workedSeconds, expectedDailySeconds);
         var extraSeconds = Math.Max(0, workedSeconds - expectedDailySeconds);
 
         WorkedTodayValueTextBlock.Text = FormatWorkedTime(workedSeconds);
-        NormalHoursValueTextBlock.Text = FormatWorkedTime(normalSeconds);
 
         if (extraSeconds > 0)
         {
@@ -266,22 +298,30 @@ public partial class MainWindow : Window
         }
     }
 
-    private void ApplyStatus(bool isWorking)
+    private void ApplyStatus(DaySummaryDto summary)
     {
-        if (isWorking)
+        if (summary.IsWorking)
         {
             StatusBadgeTextBlock.Text = "TRABAJANDO";
             StatusBadgeTextBlock.Foreground = _workingTextBrush;
             StatusBadgeBorder.Background = _workingBackgroundBrush;
             StatusBadgeBorder.BorderBrush = _workingBorderBrush;
+            return;
         }
-        else
+
+        if (summary.IsPaused)
         {
-            StatusBadgeTextBlock.Text = "FUERA";
-            StatusBadgeTextBlock.Foreground = _outsideTextBrush;
-            StatusBadgeBorder.Background = _outsideBackgroundBrush;
-            StatusBadgeBorder.BorderBrush = _outsideBorderBrush;
+            StatusBadgeTextBlock.Text = "EN PAUSA";
+            StatusBadgeTextBlock.Foreground = _pausedTextBrush;
+            StatusBadgeBorder.Background = _pausedBackgroundBrush;
+            StatusBadgeBorder.BorderBrush = _pausedBorderBrush;
+            return;
         }
+
+        StatusBadgeTextBlock.Text = "FUERA";
+        StatusBadgeTextBlock.Foreground = _outsideTextBrush;
+        StatusBadgeBorder.Background = _outsideBackgroundBrush;
+        StatusBadgeBorder.BorderBrush = _outsideBorderBrush;
     }
 
     private List<string> BuildMovementLines(DaySummaryDto summary)
@@ -320,8 +360,13 @@ public partial class MainWindow : Window
 
     private void UpdateButtons()
     {
-        EntryButton.IsEnabled = !_isBusy && !_currentSummary.IsWorking;
-        ExitButton.IsEnabled = !_isBusy && _currentSummary.IsWorking;
+        var isOutside = !_currentSummary.IsWorking && !_currentSummary.IsPaused;
+
+        EntryButton.IsEnabled = !_isBusy && isOutside;
+        PauseResumeButton.IsEnabled = !_isBusy && (_currentSummary.IsWorking || _currentSummary.IsPaused);
+        ExitButton.IsEnabled = !_isBusy && (_currentSummary.IsWorking || _currentSummary.IsPaused);
+
+        PauseResumeButton.Content = _currentSummary.IsPaused ? "Reanudar" : "Pausar";
     }
 
     private void ShowMessage(string message, bool isError)
@@ -376,5 +421,13 @@ public partial class MainWindow : Window
         }
 
         return "Buenas noches";
+    }
+
+    private enum UserFichajeAction
+    {
+        Entry,
+        Pause,
+        Resume,
+        Exit
     }
 }

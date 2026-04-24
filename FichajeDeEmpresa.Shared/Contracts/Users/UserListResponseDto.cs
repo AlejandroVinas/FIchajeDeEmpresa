@@ -6,5 +6,5 @@ public class UserListResponseDto
 
     public string Message { get; set; } = string.Empty;
 
-    public List<UserListItemDto> Users { get; set; } = [];
+    public List<UserSummaryDto> Users { get; set; } = [];
 }

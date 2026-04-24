@@ -6,27 +6,10 @@ namespace FichajeDeEmpresa.Api.Services;
 public class InMemoryAuthService : IAuthService
 {
     private readonly object _lock = new();
-
     private readonly List<UserRecord> _users =
     [
-        new UserRecord
-        {
-            UserId = 1,
-            UserName = "admin",
-            Password = "admin",
-            FullName = "Administrador",
-            Role = "Admin",
-            ExpectedDailyHours = 8m
-        },
-        new UserRecord
-        {
-            UserId = 2,
-            UserName = "user",
-            Password = "user",
-            FullName = "Usuario",
-            Role = "Empleado",
-            ExpectedDailyHours = 8m
-        }
+        new UserRecord(1, "Administrador", "admin", "admin", "Admin", 8m),
+        new UserRecord(2, "Usuario", "user", "user", "User", 8m)
     ];
 
     private int _nextUserId = 3;
@@ -38,141 +21,69 @@ public class InMemoryAuthService : IAuthService
             return Task.FromResult(new LoginResponseDto
             {
                 IsSuccess = false,
-                Message = "Debes indicar usuario y contraseña."
+                Message = "Debes introducir usuario y contraseña."
             });
         }
 
-        UserRecord? user;
-
         lock (_lock)
         {
-            user = _users.FirstOrDefault(u =>
-                u.UserName.Equals(request.UserName.Trim(), StringComparison.OrdinalIgnoreCase) &&
+            var user = _users.FirstOrDefault(u =>
+                string.Equals(u.UserName, request.UserName.Trim(), StringComparison.OrdinalIgnoreCase) &&
                 u.Password == request.Password);
-        }
 
-        if (user is null)
-        {
+            if (user is null)
+            {
+                return Task.FromResult(new LoginResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Usuario o contraseña incorrectos."
+                });
+            }
+
             return Task.FromResult(new LoginResponseDto
             {
-                IsSuccess = false,
-                Message = "Usuario o contraseña incorrectos."
+                IsSuccess = true,
+                Message = "Inicio de sesión correcto.",
+                UserId = user.UserId,
+                UserName = user.UserName,
+                FullName = user.FullName,
+                Role = user.Role,
+                ExpectedDailyHours = user.ExpectedDailyHours
             });
         }
-
-        return Task.FromResult(new LoginResponseDto
-        {
-            IsSuccess = true,
-            Message = "Login correcto.",
-            UserId = user.UserId,
-            FullName = user.FullName,
-            Role = user.Role,
-            ExpectedDailyHours = user.ExpectedDailyHours
-        });
-    }
-
-    public Task<UserProfileDto?> GetUserByIdAsync(int userId)
-    {
-        UserRecord? user;
-
-        lock (_lock)
-        {
-            user = _users.FirstOrDefault(u => u.UserId == userId);
-        }
-
-        if (user is null)
-        {
-            return Task.FromResult<UserProfileDto?>(null);
-        }
-
-        return Task.FromResult<UserProfileDto?>(new UserProfileDto
-        {
-            UserId = user.UserId,
-            UserName = user.UserName,
-            FullName = user.FullName,
-            Role = user.Role,
-            ExpectedDailyHours = user.ExpectedDailyHours
-        });
     }
 
     public Task<UserListResponseDto> GetAllUsersAsync()
     {
-        List<UserListItemDto> users;
-
         lock (_lock)
         {
-            users = _users
-                .OrderBy(u => u.UserId)
-                .Select(MapToListItem)
-                .ToList();
+            return Task.FromResult(new UserListResponseDto
+            {
+                IsSuccess = true,
+                Message = "Usuarios obtenidos correctamente.",
+                Users = _users
+                    .OrderBy(u => u.FullName)
+                    .Select(MapUser)
+                    .ToList()
+            });
         }
-
-        return Task.FromResult(new UserListResponseDto
-        {
-            IsSuccess = true,
-            Message = "Usuarios obtenidos correctamente.",
-            Users = users
-        });
     }
 
     public Task<UserOperationResponseDto> CreateUserAsync(CreateUserRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(request.FullName))
+        var validationMessage = ValidateCreateRequest(request);
+        if (!string.IsNullOrWhiteSpace(validationMessage))
         {
             return Task.FromResult(new UserOperationResponseDto
             {
                 IsSuccess = false,
-                Message = "Debes indicar el nombre completo."
+                Message = validationMessage
             });
         }
-
-        if (string.IsNullOrWhiteSpace(request.UserName))
-        {
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = "Debes indicar el nombre de usuario."
-            });
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = "Debes indicar la contraseña."
-            });
-        }
-
-        if (request.ExpectedDailyHours <= 0 || request.ExpectedDailyHours > 24)
-        {
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = "Las horas diarias deben estar entre 0 y 24."
-            });
-        }
-
-        var normalizedRole = NormalizeRole(request.Role);
-
-        if (normalizedRole is null)
-        {
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = "El rol indicado no es válido."
-            });
-        }
-
-        var normalizedUserName = request.UserName.Trim();
-        var normalizedFullName = request.FullName.Trim();
 
         lock (_lock)
         {
-            var userExists = _users.Any(u =>
-                u.UserName.Equals(normalizedUserName, StringComparison.OrdinalIgnoreCase));
-
-            if (userExists)
+            if (_users.Any(u => string.Equals(u.UserName, request.UserName.Trim(), StringComparison.OrdinalIgnoreCase)))
             {
                 return Task.FromResult(new UserOperationResponseDto
                 {
@@ -181,73 +92,173 @@ public class InMemoryAuthService : IAuthService
                 });
             }
 
-            var newUser = new UserRecord
-            {
-                UserId = _nextUserId++,
-                UserName = normalizedUserName,
-                Password = request.Password,
-                FullName = normalizedFullName,
-                Role = normalizedRole,
-                ExpectedDailyHours = request.ExpectedDailyHours
-            };
+            var user = new UserRecord(
+                _nextUserId++,
+                request.FullName.Trim(),
+                request.UserName.Trim(),
+                request.Password,
+                NormalizeRole(request.Role),
+                request.ExpectedDailyHours);
 
-            _users.Add(newUser);
+            _users.Add(user);
 
             return Task.FromResult(new UserOperationResponseDto
             {
                 IsSuccess = true,
                 Message = "Usuario creado correctamente.",
-                User = MapToListItem(newUser)
+                User = MapUser(user)
             });
         }
     }
 
-    private static string? NormalizeRole(string? role)
+    public Task<UserOperationResponseDto> UpdateUserAsync(int userId, UpdateUserRequestDto request)
     {
-        if (string.IsNullOrWhiteSpace(role))
+        var validationMessage = ValidateUpdateRequest(request);
+        if (!string.IsNullOrWhiteSpace(validationMessage))
         {
-            return null;
+            return Task.FromResult(new UserOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = validationMessage
+            });
         }
 
-        var normalized = role.Trim();
-
-        if (normalized.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        lock (_lock)
         {
-            return "Admin";
+            var index = _users.FindIndex(u => u.UserId == userId);
+
+            if (index < 0)
+            {
+                return Task.FromResult(new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "No se ha encontrado el usuario."
+                });
+            }
+
+            if (_users.Any(u =>
+                    u.UserId != userId &&
+                    string.Equals(u.UserName, request.UserName.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                return Task.FromResult(new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Ya existe otro usuario con ese nombre de usuario."
+                });
+            }
+
+            var current = _users[index];
+            var updatedPassword = string.IsNullOrWhiteSpace(request.Password)
+                ? current.Password
+                : request.Password;
+
+            var updated = new UserRecord(
+                current.UserId,
+                request.FullName.Trim(),
+                request.UserName.Trim(),
+                updatedPassword,
+                NormalizeRole(request.Role),
+                request.ExpectedDailyHours);
+
+            _users[index] = updated;
+
+            return Task.FromResult(new UserOperationResponseDto
+            {
+                IsSuccess = true,
+                Message = "Usuario actualizado correctamente.",
+                User = MapUser(updated)
+            });
+        }
+    }
+
+    public Task<UserSummaryDto?> GetUserByIdAsync(int userId)
+    {
+        lock (_lock)
+        {
+            var user = _users.FirstOrDefault(u => u.UserId == userId);
+            return Task.FromResult(user is null ? null : MapUser(user));
+        }
+    }
+
+    private static string? ValidateCreateRequest(CreateUserRequestDto request)
+    {
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return "Debes indicar el nombre completo.";
         }
 
-        if (normalized.Equals("Empleado", StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(request.UserName))
         {
-            return "Empleado";
+            return "Debes indicar el nombre de usuario.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            return "Debes indicar la contraseña.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Role))
+        {
+            return "Debes indicar el rol.";
+        }
+
+        if (request.ExpectedDailyHours <= 0)
+        {
+            return "Las horas diarias deben ser mayores que cero.";
         }
 
         return null;
     }
 
-    private static UserListItemDto MapToListItem(UserRecord user)
+    private static string? ValidateUpdateRequest(UpdateUserRequestDto request)
     {
-        return new UserListItemDto
+        if (string.IsNullOrWhiteSpace(request.FullName))
+        {
+            return "Debes indicar el nombre completo.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.UserName))
+        {
+            return "Debes indicar el nombre de usuario.";
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Role))
+        {
+            return "Debes indicar el rol.";
+        }
+
+        if (request.ExpectedDailyHours <= 0)
+        {
+            return "Las horas diarias deben ser mayores que cero.";
+        }
+
+        return null;
+    }
+
+    private static string NormalizeRole(string role)
+    {
+        return string.Equals(role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase)
+            ? "Admin"
+            : "User";
+    }
+
+    private static UserSummaryDto MapUser(UserRecord user)
+    {
+        return new UserSummaryDto
         {
             UserId = user.UserId,
-            UserName = user.UserName,
             FullName = user.FullName,
+            UserName = user.UserName,
             Role = user.Role,
             ExpectedDailyHours = user.ExpectedDailyHours
         };
     }
 
-    private sealed class UserRecord
-    {
-        public int UserId { get; set; }
-
-        public string UserName { get; set; } = string.Empty;
-
-        public string Password { get; set; } = string.Empty;
-
-        public string FullName { get; set; } = string.Empty;
-
-        public string Role { get; set; } = string.Empty;
-
-        public decimal ExpectedDailyHours { get; set; }
-    }
+    private sealed record UserRecord(
+        int UserId,
+        string FullName,
+        string UserName,
+        string Password,
+        string Role,
+        decimal ExpectedDailyHours);
 }

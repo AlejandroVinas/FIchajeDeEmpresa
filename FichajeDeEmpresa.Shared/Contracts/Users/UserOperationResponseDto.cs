@@ -6,5 +6,5 @@ public class UserOperationResponseDto
 
     public string Message { get; set; } = string.Empty;
 
-    public UserListItemDto? User { get; set; }
+    public UserSummaryDto? User { get; set; }
 }

@@ -18,5 +18,7 @@ public class AdminFichajeHistoryDayDto
 
     public bool IsWorking { get; set; }
 
+    public bool IsPaused { get; set; }
+
     public List<FichajeMovementDto> Movements { get; set; } = [];
 }

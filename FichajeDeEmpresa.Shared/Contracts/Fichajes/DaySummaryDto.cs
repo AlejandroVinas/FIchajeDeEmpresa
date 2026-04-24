@@ -6,6 +6,8 @@ public class DaySummaryDto
 
     public bool IsWorking { get; set; }
 
+    public bool IsPaused { get; set; }
+
     public DateTime? LastEntryTime { get; set; }
 
     public DateTime? LastExitTime { get; set; }

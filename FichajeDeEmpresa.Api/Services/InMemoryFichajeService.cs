@@ -15,53 +15,32 @@ public class InMemoryFichajeService : IFichajeService
 
     public async Task<FichajeOperationResponseDto> RegisterEntryAsync(RegisterFichajeRequestDto request)
     {
-        if (request.UserId <= 0)
-        {
-            return new FichajeOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = "El usuario no es válido."
-            };
-        }
+        return await RegisterMovementAsync(
+            request,
+            MovementType.Entry,
+            WorkStatus.Outside,
+            "Entrada registrada correctamente.",
+            "No puedes fichar entrada porque ya has iniciado la jornada o estás en pausa.");
+    }
 
-        var user = await _authService.GetUserByIdAsync(request.UserId);
+    public async Task<FichajeOperationResponseDto> RegisterPauseAsync(RegisterFichajeRequestDto request)
+    {
+        return await RegisterMovementAsync(
+            request,
+            MovementType.Pause,
+            WorkStatus.Working,
+            "Pausa registrada correctamente.",
+            "Solo puedes pausar si ahora mismo estás trabajando.");
+    }
 
-        if (user is null)
-        {
-            return new FichajeOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = "No se ha encontrado el usuario."
-            };
-        }
-
-        lock (_lock)
-        {
-            var currentSummary = BuildTodaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Now);
-
-            if (currentSummary.IsWorking)
-            {
-                return new FichajeOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "No puedes fichar entrada porque ya estás trabajando.",
-                    Summary = currentSummary
-                };
-            }
-
-            _records.Add(new FichajeRecord(
-                request.UserId,
-                DateTime.Now,
-                FichajeType.Entry,
-                NormalizeComment(request.Comment)));
-
-            return new FichajeOperationResponseDto
-            {
-                IsSuccess = true,
-                Message = "Entrada registrada correctamente.",
-                Summary = BuildTodaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Now)
-            };
-        }
+    public async Task<FichajeOperationResponseDto> RegisterResumeAsync(RegisterFichajeRequestDto request)
+    {
+        return await RegisterMovementAsync(
+            request,
+            MovementType.Resume,
+            WorkStatus.Paused,
+            "Reanudación registrada correctamente.",
+            "Solo puedes reanudar si ahora mismo estás en pausa.");
     }
 
     public async Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request)
@@ -88,29 +67,30 @@ public class InMemoryFichajeService : IFichajeService
 
         lock (_lock)
         {
-            var currentSummary = BuildTodaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Now);
+            var todayRecords = GetOrderedRecordsForDate(request.UserId, DateTime.Today);
+            var currentStatus = GetCurrentStatus(todayRecords);
 
-            if (!currentSummary.IsWorking)
+            if (currentStatus == WorkStatus.Outside)
             {
                 return new FichajeOperationResponseDto
                 {
                     IsSuccess = false,
-                    Message = "No puedes fichar salida porque ahora mismo no estás trabajando.",
-                    Summary = currentSummary
+                    Message = "No puedes fichar salida porque ahora mismo no has iniciado la jornada.",
+                    Summary = BuildDaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Today, DateTime.Now)
                 };
             }
 
             _records.Add(new FichajeRecord(
                 request.UserId,
                 DateTime.Now,
-                FichajeType.Exit,
+                MovementType.Exit,
                 NormalizeComment(request.Comment)));
 
             return new FichajeOperationResponseDto
             {
                 IsSuccess = true,
                 Message = "Salida registrada correctamente.",
-                Summary = BuildTodaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Now)
+                Summary = BuildDaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Today, DateTime.Now)
             };
         }
     }
@@ -143,7 +123,7 @@ public class InMemoryFichajeService : IFichajeService
             {
                 IsSuccess = true,
                 Message = "Resumen del día obtenido correctamente.",
-                Summary = BuildTodaySummary(userId, user.ExpectedDailyHours, DateTime.Now)
+                Summary = BuildDaySummary(userId, user.ExpectedDailyHours, DateTime.Today, DateTime.Now)
             };
         }
     }
@@ -209,32 +189,16 @@ public class InMemoryFichajeService : IFichajeService
                     continue;
                 }
 
-                var dayRecords = group
+                var orderedRecords = group
                     .OrderBy(r => r.Timestamp)
                     .ToList();
 
-                var workedSeconds = CalculateWorkedSecondsForDate(
-                    dayRecords,
-                    user.ExpectedDailyHours,
-                    group.Key.Date,
-                    DateTime.Now);
+                var currentStatus = GetCurrentStatus(orderedRecords);
+                var workedSeconds = CalculateWorkedSecondsForDate(orderedRecords, group.Key.Date, DateTime.Now);
 
                 var expectedDailySeconds = (int)Math.Max(0, Math.Round(user.ExpectedDailyHours * 3600m));
                 var normalSeconds = Math.Min(workedSeconds, expectedDailySeconds);
                 var extraSeconds = Math.Max(0, workedSeconds - expectedDailySeconds);
-
-                var lastRecord = dayRecords.LastOrDefault();
-                var isWorking = lastRecord?.Type == FichajeType.Entry;
-
-                var movements = dayRecords
-                    .OrderByDescending(r => r.Timestamp)
-                    .Select(r => new FichajeMovementDto
-                    {
-                        Type = r.Type == FichajeType.Entry ? "Entrada" : "Salida",
-                        Timestamp = r.Timestamp,
-                        Comment = r.Comment
-                    })
-                    .ToList();
 
                 resultDays.Add(new AdminFichajeHistoryDayDto
                 {
@@ -245,8 +209,12 @@ public class InMemoryFichajeService : IFichajeService
                     WorkedSeconds = workedSeconds,
                     NormalSeconds = normalSeconds,
                     ExtraSeconds = extraSeconds,
-                    IsWorking = isWorking,
-                    Movements = movements
+                    IsWorking = currentStatus == WorkStatus.Working,
+                    IsPaused = currentStatus == WorkStatus.Paused,
+                    Movements = orderedRecords
+                        .OrderByDescending(r => r.Timestamp)
+                        .Select(MapMovement)
+                        .ToList()
                 });
             }
 
@@ -259,88 +227,220 @@ public class InMemoryFichajeService : IFichajeService
         }
     }
 
-    private DaySummaryDto BuildTodaySummary(int userId, decimal expectedDailyHours, DateTime now)
+    private async Task<FichajeOperationResponseDto> RegisterMovementAsync(
+        RegisterFichajeRequestDto request,
+        MovementType movementType,
+        WorkStatus requiredStatus,
+        string successMessage,
+        string invalidStatusMessage)
     {
-        var todayRecords = _records
-            .Where(r => r.UserId == userId && r.Timestamp.Date == now.Date)
-            .OrderBy(r => r.Timestamp)
-            .ToList();
+        if (request.UserId <= 0)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "El usuario no es válido."
+            };
+        }
 
-        var lastRecord = todayRecords.LastOrDefault();
-        var isWorking = lastRecord?.Type == FichajeType.Entry;
+        var user = await _authService.GetUserByIdAsync(request.UserId);
 
-        var lastEntry = todayRecords.LastOrDefault(r => r.Type == FichajeType.Entry)?.Timestamp;
-        var lastExit = todayRecords.LastOrDefault(r => r.Type == FichajeType.Exit)?.Timestamp;
+        if (user is null)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "No se ha encontrado el usuario."
+            };
+        }
 
-        var workedSeconds = CalculateWorkedSecondsForDate(todayRecords, expectedDailyHours, now.Date, now);
+        lock (_lock)
+        {
+            var todayRecords = GetOrderedRecordsForDate(request.UserId, DateTime.Today);
+            var currentStatus = GetCurrentStatus(todayRecords);
 
+            if (currentStatus != requiredStatus)
+            {
+                return new FichajeOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = invalidStatusMessage,
+                    Summary = BuildDaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Today, DateTime.Now)
+                };
+            }
+
+            _records.Add(new FichajeRecord(
+                request.UserId,
+                DateTime.Now,
+                movementType,
+                NormalizeComment(request.Comment)));
+
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = true,
+                Message = successMessage,
+                Summary = BuildDaySummary(request.UserId, user.ExpectedDailyHours, DateTime.Today, DateTime.Now)
+            };
+        }
+    }
+
+    private DaySummaryDto BuildDaySummary(int userId, decimal expectedDailyHours, DateTime date, DateTime now)
+    {
+        var orderedRecords = GetOrderedRecordsForDate(userId, date);
+        var currentStatus = GetCurrentStatus(orderedRecords);
+
+        var workedSeconds = CalculateWorkedSecondsForDate(orderedRecords, date, now);
         var expectedDailySeconds = (int)Math.Max(0, Math.Round(expectedDailyHours * 3600m));
         var normalSeconds = Math.Min(workedSeconds, expectedDailySeconds);
         var extraSeconds = Math.Max(0, workedSeconds - expectedDailySeconds);
 
-        var movements = todayRecords
-            .OrderByDescending(r => r.Timestamp)
-            .Select(r => new FichajeMovementDto
-            {
-                Type = r.Type == FichajeType.Entry ? "Entrada" : "Salida",
-                Timestamp = r.Timestamp,
-                Comment = r.Comment
-            })
-            .ToList();
+        var lastStart = orderedRecords
+            .Where(r => r.Type is MovementType.Entry or MovementType.Resume)
+            .Select(r => (DateTime?)r.Timestamp)
+            .LastOrDefault();
+
+        var lastStop = orderedRecords
+            .Where(r => r.Type is MovementType.Pause or MovementType.Exit)
+            .Select(r => (DateTime?)r.Timestamp)
+            .LastOrDefault();
 
         return new DaySummaryDto
         {
             UserId = userId,
-            IsWorking = isWorking,
-            LastEntryTime = lastEntry,
-            LastExitTime = lastExit,
+            IsWorking = currentStatus == WorkStatus.Working,
+            IsPaused = currentStatus == WorkStatus.Paused,
+            LastEntryTime = lastStart,
+            LastExitTime = lastStop,
             WorkedSecondsToday = workedSeconds,
             NormalSecondsToday = normalSeconds,
             ExtraSecondsToday = extraSeconds,
-            Movements = movements
+            Movements = orderedRecords
+                .OrderByDescending(r => r.Timestamp)
+                .Select(MapMovement)
+                .ToList()
         };
     }
 
-    private static int CalculateWorkedSecondsForDate(
-        List<FichajeRecord> records,
-        decimal expectedDailyHours,
-        DateTime date,
-        DateTime now)
+    private List<FichajeRecord> GetOrderedRecordsForDate(int userId, DateTime date)
     {
-        var totalSeconds = 0;
-        DateTime? openEntry = null;
+        return _records
+            .Where(r => r.UserId == userId && r.Timestamp.Date == date.Date)
+            .OrderBy(r => r.Timestamp)
+            .ToList();
+    }
+
+    private static WorkStatus GetCurrentStatus(IEnumerable<FichajeRecord> records)
+    {
+        var status = WorkStatus.Outside;
 
         foreach (var record in records.OrderBy(r => r.Timestamp))
         {
-            if (record.Type == FichajeType.Entry)
+            switch (record.Type)
             {
-                if (openEntry is null)
-                {
-                    openEntry = record.Timestamp;
-                }
+                case MovementType.Entry:
+                    status = WorkStatus.Working;
+                    break;
 
-                continue;
-            }
+                case MovementType.Pause:
+                    if (status == WorkStatus.Working)
+                    {
+                        status = WorkStatus.Paused;
+                    }
+                    break;
 
-            if (record.Type == FichajeType.Exit && openEntry is not null)
-            {
-                var seconds = (int)Math.Max(0, (record.Timestamp - openEntry.Value).TotalSeconds);
-                totalSeconds += seconds;
-                openEntry = null;
+                case MovementType.Resume:
+                    if (status == WorkStatus.Paused)
+                    {
+                        status = WorkStatus.Working;
+                    }
+                    break;
+
+                case MovementType.Exit:
+                    status = WorkStatus.Outside;
+                    break;
             }
         }
 
-        if (openEntry is not null)
+        return status;
+    }
+
+    private static int CalculateWorkedSecondsForDate(List<FichajeRecord> orderedRecords, DateTime date, DateTime now)
+    {
+        var totalSeconds = 0;
+        DateTime? openStart = null;
+        var status = WorkStatus.Outside;
+
+        foreach (var record in orderedRecords.OrderBy(r => r.Timestamp))
+        {
+            switch (record.Type)
+            {
+                case MovementType.Entry:
+                    if (status == WorkStatus.Outside)
+                    {
+                        openStart = record.Timestamp;
+                        status = WorkStatus.Working;
+                    }
+                    break;
+
+                case MovementType.Resume:
+                    if (status == WorkStatus.Paused)
+                    {
+                        openStart = record.Timestamp;
+                        status = WorkStatus.Working;
+                    }
+                    break;
+
+                case MovementType.Pause:
+                    if (status == WorkStatus.Working && openStart is not null)
+                    {
+                        totalSeconds += (int)Math.Max(0, (record.Timestamp - openStart.Value).TotalSeconds);
+                        openStart = null;
+                        status = WorkStatus.Paused;
+                    }
+                    break;
+
+                case MovementType.Exit:
+                    if (status == WorkStatus.Working && openStart is not null)
+                    {
+                        totalSeconds += (int)Math.Max(0, (record.Timestamp - openStart.Value).TotalSeconds);
+                        openStart = null;
+                    }
+
+                    if (status is WorkStatus.Working or WorkStatus.Paused)
+                    {
+                        status = WorkStatus.Outside;
+                    }
+                    break;
+            }
+        }
+
+        if (status == WorkStatus.Working && openStart is not null)
         {
             var closingMoment = date.Date == now.Date
                 ? now
                 : date.Date.AddDays(1).AddSeconds(-1);
 
-            var seconds = (int)Math.Max(0, (closingMoment - openEntry.Value).TotalSeconds);
-            totalSeconds += seconds;
+            totalSeconds += (int)Math.Max(0, (closingMoment - openStart.Value).TotalSeconds);
         }
 
         return totalSeconds;
+    }
+
+    private static FichajeMovementDto MapMovement(FichajeRecord record)
+    {
+        return new FichajeMovementDto
+        {
+            Type = record.Type switch
+            {
+                MovementType.Entry => "Entrada",
+                MovementType.Pause => "Pausa",
+                MovementType.Resume => "Reanudación",
+                MovementType.Exit => "Salida",
+                _ => "Movimiento"
+            },
+            Timestamp = record.Timestamp,
+            Comment = record.Comment
+        };
     }
 
     private static string? NormalizeComment(string? comment)
@@ -350,11 +450,20 @@ public class InMemoryFichajeService : IFichajeService
             : comment.Trim();
     }
 
-    private sealed record FichajeRecord(int UserId, DateTime Timestamp, FichajeType Type, string? Comment);
+    private sealed record FichajeRecord(int UserId, DateTime Timestamp, MovementType Type, string? Comment);
 
-    private enum FichajeType
+    private enum MovementType
     {
         Entry,
+        Pause,
+        Resume,
         Exit
+    }
+
+    private enum WorkStatus
+    {
+        Outside,
+        Working,
+        Paused
     }
 }

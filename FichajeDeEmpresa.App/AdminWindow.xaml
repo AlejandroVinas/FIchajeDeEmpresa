@@ -7,47 +7,14 @@
         Title="HIFLUNECAN S.L. - Administración"
         Height="760"
         Width="1240"
-        MinHeight="720"
-        MinWidth="1120"
+        MinHeight="680"
+        MinWidth="980"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         ResizeMode="CanResize"
         ShowInTaskbar="True"
         WindowState="Maximized"
-        Background="#EEF2F7">
-
-    <Window.Resources>
-        <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#D9E1EC" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="18" />
-            <Setter Property="Padding" Value="22" />
-        </Style>
-
-        <Style x:Key="SectionTitleStyle" TargetType="TextBlock">
-            <Setter Property="FontSize" Value="20" />
-            <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Foreground" Value="#17212B" />
-        </Style>
-
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="44" />
-            <Setter Property="FontSize" Value="14" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="BorderBrush" Value="#2563EB" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="18,0" />
-        </Style>
-
-        <Style x:Key="SecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-            <Setter Property="Foreground" Value="#0F172A" />
-            <Setter Property="Background" Value="White" />
-            <Setter Property="BorderBrush" Value="#CBD5E1" />
-        </Style>
-    </Window.Resources>
+        Background="{StaticResource WindowBackgroundBrush}">
 
     <Grid Margin="18">
         <Grid.RowDefinitions>
@@ -57,21 +24,24 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0"
-                Style="{StaticResource CardBorderStyle}">
+                Style="{StaticResource AppCardBorderStyle}"
+                Padding="22">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="20" />
-                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <Border Grid.Column="0"
                         Width="96"
                         Height="72"
                         CornerRadius="14"
-                        Background="#FFF8E1"
+                        Background="{StaticResource InfoBackgroundBrush}"
+                        BorderBrush="{StaticResource InfoBorderBrush}"
+                        BorderThickness="1"
                         Padding="10"
                         VerticalAlignment="Center">
                     <Image Source="pack://application:,,,/Assets/Images/hiflunecan.png"
@@ -83,165 +53,158 @@
                     <TextBlock x:Name="HeaderCompanyNameTextBlock"
                                FontSize="28"
                                FontWeight="Bold"
-                               Foreground="#0F172A" />
+                               Foreground="{StaticResource TextPrimaryBrush}" />
 
                     <TextBlock x:Name="HeaderBrandTextBlock"
-                               Margin="0,3,0,0"
+                               Margin="0,4,0,0"
                                FontSize="17"
                                FontWeight="SemiBold"
-                               Foreground="#475569" />
+                               Foreground="{StaticResource BrandPrimaryDarkBrush}" />
 
                     <TextBlock x:Name="WelcomeTextBlock"
                                Margin="0,12,0,0"
                                FontSize="20"
                                FontWeight="SemiBold"
-                               Foreground="#1E293B" />
+                               Foreground="{StaticResource TextPrimaryBrush}" />
                 </StackPanel>
 
                 <Border Grid.Column="4"
-                        Background="#F8FAFC"
-                        BorderBrush="#D9E1EC"
-                        BorderThickness="1"
-                        CornerRadius="16"
+                        MinWidth="260"
+                        Style="{StaticResource AppSoftCardBorderStyle}"
                         Padding="16">
                     <StackPanel>
                         <TextBlock Text="Sesión actual"
                                    FontSize="12"
                                    FontWeight="SemiBold"
-                                   Foreground="#64748B"
+                                   Foreground="{StaticResource TextMutedBrush}"
                                    Margin="0,0,0,8" />
 
                         <TextBlock x:Name="SessionUserNameTextBlock"
                                    FontSize="18"
                                    FontWeight="Bold"
-                                   Foreground="#0F172A" />
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
 
                         <TextBlock x:Name="SessionRoleTextBlock"
                                    Margin="0,5,0,0"
                                    FontSize="13"
-                                   Foreground="#334155" />
+                                   Foreground="{StaticResource TextSecondaryBrush}" />
 
                         <Button x:Name="ChangeUserButton"
                                 Margin="0,16,0,0"
                                 Width="160"
                                 Content="Cambiar usuario"
                                 HorizontalAlignment="Left"
-                                Style="{StaticResource SecondaryButtonStyle}"
+                                Style="{StaticResource AppSecondaryButtonStyle}"
                                 Click="ChangeUserButton_Click" />
                     </StackPanel>
                 </Border>
             </Grid>
         </Border>
 
-        <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="18" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <WrapPanel ItemWidth="470"
+                       ItemHeight="300">
+                <Border Width="470"
+                        Height="300"
+                        Margin="0,0,18,18"
+                        Style="{StaticResource AppCardBorderStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="18" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="18" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-            <Border Grid.Column="0"
-                    Style="{StaticResource CardBorderStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="20" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="Gestión de usuarios"
+                                   Style="{StaticResource AppSectionTitleStyle}" />
 
-                    <TextBlock Grid.Row="0"
-                               Text="Gestión de usuarios"
-                               Style="{StaticResource SectionTitleStyle}" />
+                        <Border Grid.Row="2"
+                                Style="{StaticResource AppSoftCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Usuarios"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
 
-                    <Border Grid.Row="2"
-                            Background="#F8FAFC"
-                            BorderBrush="#E2E8F0"
-                            BorderThickness="1"
-                            CornerRadius="16"
-                            Padding="18">
-                        <StackPanel>
-                            <TextBlock Text="Usuarios"
-                                       FontSize="15"
-                                       FontWeight="Bold"
-                                       Foreground="#17212B" />
+                                <TextBlock Margin="0,14,0,0"
+                                           Text="Ver usuarios del sistema"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
 
-                            <TextBlock Margin="0,12,0,0"
-                                       Text="• Ver usuarios"
-                                       FontSize="14"
-                                       Foreground="#475569" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="Crear nuevos usuarios"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
 
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="• Crear usuario"
-                                       FontSize="14"
-                                       Foreground="#475569" />
-                        </StackPanel>
-                    </Border>
+                        <Button Grid.Row="4"
+                                x:Name="OpenUsersButton"
+                                Width="210"
+                                Content="Abrir gestión de usuarios"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource AppPrimaryButtonStyle}"
+                                Click="OpenUsersButton_Click" />
+                    </Grid>
+                </Border>
 
-                    <Button Grid.Row="4"
-                            x:Name="OpenUsersButton"
-                            Width="190"
-                            Content="Abrir gestión de usuarios"
-                            HorizontalAlignment="Left"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Click="OpenUsersButton_Click" />
-                </Grid>
-            </Border>
+                <Border Width="470"
+                        Height="300"
+                        Margin="0,0,0,18"
+                        Style="{StaticResource AppCardBorderStyle}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="18" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="18" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
 
-            <Border Grid.Column="2"
-                    Style="{StaticResource CardBorderStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="20" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="18" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0"
+                                   Text="Historial de fichajes"
+                                   Style="{StaticResource AppSectionTitleStyle}" />
 
-                    <TextBlock Grid.Row="0"
-                               Text="Historial detallado"
-                               Style="{StaticResource SectionTitleStyle}" />
+                        <Border Grid.Row="2"
+                                Style="{StaticResource AppSoftCardBorderStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Historial"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="{StaticResource TextPrimaryBrush}" />
 
-                    <Border Grid.Row="2"
-                            Background="#F8FAFC"
-                            BorderBrush="#E2E8F0"
-                            BorderThickness="1"
-                            CornerRadius="16"
-                            Padding="18">
-                        <StackPanel>
-                            <TextBlock Text="Fichajes"
-                                       FontSize="15"
-                                       FontWeight="Bold"
-                                       Foreground="#17212B" />
+                                <TextBlock Margin="0,14,0,0"
+                                           Text="Filtrar por usuario"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
 
-                            <TextBlock Margin="0,12,0,0"
-                                       Text="• Filtrar por usuario"
-                                       FontSize="14"
-                                       Foreground="#475569" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="Filtrar por fechas"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
 
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="• Filtrar por fechas"
-                                       FontSize="14"
-                                       Foreground="#475569" />
+                                <TextBlock Margin="0,8,0,0"
+                                           Text="Consultar detalle del día"
+                                           FontSize="14"
+                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Border>
 
-                            <TextBlock Margin="0,8,0,0"
-                                       Text="• Ver comentarios y horas extra"
-                                       FontSize="14"
-                                       Foreground="#475569" />
-                        </StackPanel>
-                    </Border>
-
-                    <Button Grid.Row="4"
-                            x:Name="OpenHistoryButton"
-                            Width="210"
-                            Content="Abrir historial detallado"
-                            HorizontalAlignment="Left"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Click="OpenHistoryButton_Click" />
-                </Grid>
-            </Border>
-        </Grid>
+                        <Button Grid.Row="4"
+                                x:Name="OpenHistoryButton"
+                                Width="210"
+                                Content="Abrir historial"
+                                HorizontalAlignment="Left"
+                                Style="{StaticResource AppPrimaryButtonStyle}"
+                                Click="OpenHistoryButton_Click" />
+                    </Grid>
+                </Border>
+            </WrapPanel>
+        </ScrollViewer>
     </Grid>
 </Window>

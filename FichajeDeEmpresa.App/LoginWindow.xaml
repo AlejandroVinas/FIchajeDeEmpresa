@@ -4,150 +4,139 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="HIFLUNECAN S.L. - Inicio de sesión"
-        Height="700"
-        Width="700"
-        MinHeight="680"
-        MinWidth="680"
-        ResizeMode="NoResize"
+        Title="HIFLUNECAN S.L. - Iniciar sesión"
+        Height="620"
+        Width="980"
+        MinHeight="580"
+        MinWidth="860"
         WindowStartupLocation="CenterScreen"
-        Background="#EEF2F7">
-
-    <Window.Resources>
-        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
-            <Setter Property="Height" Value="46" />
-            <Setter Property="FontSize" Value="15" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="BorderBrush" Value="#2563EB" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="18,0" />
-        </Style>
-    </Window.Resources>
+        ResizeMode="CanResize"
+        Background="{StaticResource WindowBackgroundBrush}">
 
     <Grid Margin="24">
-        <Border Background="White"
-                BorderBrush="#D9E1EC"
-                BorderThickness="1"
-                CornerRadius="24"
-                Padding="34">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1.05*" />
+            <ColumnDefinition Width="22" />
+            <ColumnDefinition Width="0.95*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- PANEL IZQUIERDO -->
+        <Border Grid.Column="0"
+                Style="{StaticResource AppCardBorderStyle}"
+                Padding="28">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="14" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="8" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="18" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="12" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="14" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="16" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="16" />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="0"
-                        Width="110"
-                        Height="82"
+                        Width="120"
+                        Height="92"
                         CornerRadius="18"
-                        Background="#FFF8E1"
-                        Padding="10"
-                        HorizontalAlignment="Center">
+                        Background="{StaticResource InfoBackgroundBrush}"
+                        BorderBrush="{StaticResource InfoBorderBrush}"
+                        BorderThickness="1"
+                        Padding="12"
+                        HorizontalAlignment="Left">
                     <Image Source="pack://application:,,,/Assets/Images/hiflunecan.png"
                            Stretch="Uniform" />
                 </Border>
 
-                <TextBlock Grid.Row="2"
-                           x:Name="CompanyNameTextBlock"
-                           FontSize="30"
-                           FontWeight="Bold"
-                           Foreground="#0F172A"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap" />
+                <StackPanel Grid.Row="2">
+                    <TextBlock x:Name="CompanyNameTextBlock"
+                               Text="HIFLUNECAN S.L."
+                               FontSize="30"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
+
+                    <TextBlock x:Name="BrandNameTextBlock"
+                               Margin="0,8,0,0"
+                               Text="Sistema de control horario"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{StaticResource BrandPrimaryDarkBrush}" />
+                </StackPanel>
 
                 <TextBlock Grid.Row="4"
-                           x:Name="BrandNameTextBlock"
-                           FontSize="19"
-                           FontWeight="SemiBold"
-                           Foreground="#475569"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap" />
-
-                <TextBlock Grid.Row="6"
-                           Text="Acceso al sistema"
-                           FontSize="22"
-                           FontWeight="Bold"
-                           Foreground="#0F172A"
-                           TextAlignment="Center" />
-
-                <TextBlock Grid.Row="8"
                            x:Name="WelcomeMessageTextBlock"
+                           Text="Accede con tu usuario para registrar entrada, pausa, reanudación y salida."
                            FontSize="14"
-                           Foreground="#64748B"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"
-                           Margin="50,0,50,0" />
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           TextWrapping="Wrap" />
+            </Grid>
+        </Border>
 
-                <StackPanel Grid.Row="10">
+        <!-- PANEL DERECHO -->
+        <Border Grid.Column="2"
+                Style="{StaticResource AppCardBorderStyle}"
+                Padding="30">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="14" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="18" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0">
+                    <TextBlock Text="Iniciar sesión"
+                               FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimaryBrush}" />
+
+                    <TextBlock Margin="0,8,0,0"
+                               Text="Introduce tus credenciales"
+                               FontSize="14"
+                               Foreground="{StaticResource TextSecondaryBrush}" />
+                </StackPanel>
+
+                <StackPanel Grid.Row="2">
                     <TextBlock Text="Usuario"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               Foreground="#475569"
-                               Margin="0,0,0,8" />
-
+                               Style="{StaticResource AppFieldLabelStyle}" />
                     <TextBox x:Name="UserNameTextBox"
-                             Height="42"
-                             FontSize="14"
-                             Padding="12,7" />
+                             Style="{StaticResource AppTextBoxStyle}" />
                 </StackPanel>
 
-                <StackPanel Grid.Row="12">
+                <StackPanel Grid.Row="4">
                     <TextBlock Text="Contraseña"
+                               Style="{StaticResource AppFieldLabelStyle}" />
+                    <PasswordBox x:Name="PasswordBox"
+                                 Style="{StaticResource AppPasswordBoxStyle}" />
+                </StackPanel>
+
+                <Button Grid.Row="6"
+                        x:Name="LoginButton"
+                        Content="Iniciar sesión"
+                        Style="{StaticResource AppPrimaryButtonStyle}"
+                        Click="LoginButton_Click" />
+
+                <Border Grid.Row="8"
+                        x:Name="StatusBorder"
+                        Background="{StaticResource SoftCardBackgroundBrush}"
+                        BorderBrush="{StaticResource BorderBrushSoft}"
+                        BorderThickness="1"
+                        CornerRadius="12"
+                        Padding="12"
+                        Visibility="Collapsed">
+                    <TextBlock x:Name="StatusTextBlock"
+                               Text=""
                                FontSize="13"
                                FontWeight="SemiBold"
-                               Foreground="#475569"
-                               Margin="0,0,0,8" />
-
-                    <PasswordBox x:Name="PasswordBox"
-                                 Height="42"
-                                 FontSize="14"
-                                 Padding="12,7"
-                                 KeyDown="PasswordBox_KeyDown" />
-                </StackPanel>
-
-                <StackPanel Grid.Row="14">
-                    <Button x:Name="LoginButton"
-                            Content="Iniciar sesión"
-                            Style="{StaticResource PrimaryButtonStyle}"
-                            Click="LoginButton_Click" />
-
-                    <Border x:Name="StatusBorder"
-                            Margin="0,14,0,0"
-                            Padding="12"
-                            Background="#FDECEC"
-                            BorderBrush="#F2B8B5"
-                            BorderThickness="1"
-                            CornerRadius="12"
-                            Visibility="Collapsed">
-                        <TextBlock x:Name="StatusTextBlock"
-                                   Foreground="#9F1239"
-                                   FontSize="13"
-                                   FontWeight="SemiBold"
-                                   TextWrapping="Wrap"
-                                   TextAlignment="Center" />
-                    </Border>
-
-                    <TextBlock Margin="0,14,0,0"
-                               Text="Acceso exclusivo para personal autorizado."
-                               FontSize="12"
-                               Foreground="#94A3B8"
-                               TextAlignment="Center" />
-                </StackPanel>
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               TextWrapping="Wrap" />
+                </Border>
             </Grid>
         </Border>
     </Grid>

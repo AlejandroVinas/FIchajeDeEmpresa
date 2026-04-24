@@ -16,16 +16,35 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<UserListResponseDto>> GetAllAsync()
+    public async Task<ActionResult<UserListResponseDto>> GetUsersAsync()
     {
         var result = await _authService.GetAllUsersAsync();
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
         return Ok(result);
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserOperationResponseDto>> CreateAsync([FromBody] CreateUserRequestDto request)
+    public async Task<ActionResult<UserOperationResponseDto>> CreateUserAsync([FromBody] CreateUserRequestDto request)
     {
         var result = await _authService.CreateUserAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPut("{userId:int}")]
+    public async Task<ActionResult<UserOperationResponseDto>> UpdateUserAsync(int userId, [FromBody] UpdateUserRequestDto request)
+    {
+        var result = await _authService.UpdateUserAsync(userId, request);
 
         if (!result.IsSuccess)
         {

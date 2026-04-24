@@ -7,9 +7,11 @@ public interface IAuthService
 {
     Task<LoginResponseDto> LoginAsync(LoginRequestDto request);
 
-    Task<UserProfileDto?> GetUserByIdAsync(int userId);
-
     Task<UserListResponseDto> GetAllUsersAsync();
 
     Task<UserOperationResponseDto> CreateUserAsync(CreateUserRequestDto request);
+
+    Task<UserOperationResponseDto> UpdateUserAsync(int userId, UpdateUserRequestDto request);
+
+    Task<UserSummaryDto?> GetUserByIdAsync(int userId);
 }

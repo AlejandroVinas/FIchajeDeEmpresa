@@ -48,6 +48,16 @@ public class ApiClient
         return await PostFichajeAsync("api/fichajes/entrada", request);
     }
 
+    public async Task<FichajeOperationResponseDto> RegisterPauseAsync(RegisterFichajeRequestDto request)
+    {
+        return await PostFichajeAsync("api/fichajes/pausa", request);
+    }
+
+    public async Task<FichajeOperationResponseDto> RegisterResumeAsync(RegisterFichajeRequestDto request)
+    {
+        return await PostFichajeAsync("api/fichajes/reanudar", request);
+    }
+
     public async Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request)
     {
         return await PostFichajeAsync("api/fichajes/salida", request);
@@ -181,6 +191,44 @@ public class ApiClient
                 if (string.IsNullOrWhiteSpace(result.Message))
                 {
                     result.Message = "No se pudo crear el usuario.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new UserOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<UserOperationResponseDto> UpdateUserAsync(int userId, UpdateUserRequestDto request)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/users/{userId}", request);
+            var result = await response.Content.ReadFromJsonAsync<UserOperationResponseDto>();
+
+            if (result is null)
+            {
+                return new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo actualizar el usuario.";
                 }
             }
 
