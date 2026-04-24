@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .badge-entrada {
+    @apply inline-block rounded-full bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .badge-salida {
+    @apply inline-block rounded-full bg-red-100 text-red-800 px-2.5 py-0.5 text-xs font-semibold;
+  }
+  .btn {
+    @apply inline-flex items-center gap-1.5 rounded-md px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white hover:bg-brand-hover focus:ring-brand;
+  }
+  .btn-danger {
+    @apply btn bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+  .btn-ghost {
+    @apply btn border border-brand text-brand bg-transparent hover:bg-indigo-50 focus:ring-brand;
+  }
+  .btn-success {
+    @apply btn bg-green-700 text-white hover:bg-green-800 focus:ring-green-600;
+  }
+  .input {
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand;
+  }
+  .card {
+    @apply bg-white rounded-xl border border-gray-200 shadow-sm;
+  }
+}
