@@ -14,3 +14,22 @@ dist/
 Thumbs.db
 
 *.zip
+
+# V5 - dependencias
+v5/admin_panel/node_modules/
+v5/electron/node_modules/
+
+# V5 - builds generadas
+v5/admin_panel/dist/
+v5/electron/dist/
+v5/electron/release/
+v5/electron/.vite/
+v5/electron/.runtime/
+
+# V5 - base de datos y logs locales
+v5/**/*.db
+v5/**/*.sqlite
+v5/**/*.sqlite3
+v5/**/*.log
+v5/electron/.env
+v5/backend/.env
