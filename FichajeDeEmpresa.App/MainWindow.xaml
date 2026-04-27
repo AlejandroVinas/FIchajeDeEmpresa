@@ -149,10 +149,11 @@
                             <StackPanel Grid.Column="0">
                                 <TextBlock Text="Tu jornada de hoy"
                                            Style="{StaticResource AppSectionTitleStyle}" />
-                                <TextBlock Margin="0,6,0,0"
-                                           Text="Consulta tu estado actual y el tiempo trabajado."
+                                <TextBlock x:Name="CurrentSituationTextBlock"
+                                           Margin="0,6,0,0"
                                            FontSize="13"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Text="Todavía no has empezado tu jornada." />
                             </StackPanel>
 
                             <StackPanel Grid.Column="1"
@@ -214,7 +215,7 @@
                                                FontSize="12"
                                                Foreground="{StaticResource TextSecondaryBrush}"
                                                TextWrapping="Wrap"
-                                               Text="Hay horas extra hoy." />
+                                               Text="Hoy has generado horas extra." />
                                 </StackPanel>
                             </Border>
                         </Grid>
@@ -242,8 +243,7 @@
                                        Foreground="{StaticResource TextSecondaryBrush}" />
                         </StackPanel>
 
-                        <WrapPanel Grid.Row="2"
-                                   Margin="0,0,0,0">
+                        <WrapPanel Grid.Row="2">
                             <Button x:Name="EntryButton"
                                     Margin="0,0,10,10"
                                     Content="Fichar entrada"

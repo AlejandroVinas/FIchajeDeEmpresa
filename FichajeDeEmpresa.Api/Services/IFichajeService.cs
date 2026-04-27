@@ -14,5 +14,5 @@ public interface IFichajeService
 
     Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId);
 
-    Task<AdminFichajeHistoryResponseDto> GetHistoryAsync(int? userId, DateTime? fromDate, DateTime? toDate);
+    Task<AdminFichajeHistoryResponseDto> GetHistoryAsync(int? userId, DateTime fromDate, DateTime toDate);
 }

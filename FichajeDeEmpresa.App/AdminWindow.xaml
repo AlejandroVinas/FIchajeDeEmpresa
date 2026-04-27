@@ -101,110 +101,112 @@
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="2"
-                      VerticalScrollBarVisibility="Auto"
-                      HorizontalScrollBarVisibility="Disabled">
-            <WrapPanel ItemWidth="470"
-                       ItemHeight="300">
-                <Border Width="470"
-                        Height="300"
-                        Margin="0,0,18,18"
-                        Style="{StaticResource AppCardBorderStyle}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="18" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-                        <TextBlock Grid.Row="0"
-                                   Text="Gestión de usuarios"
-                                   Style="{StaticResource AppSectionTitleStyle}" />
+            <Border Grid.Column="0"
+                    Style="{StaticResource AppCardBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                        <Border Grid.Row="2"
-                                Style="{StaticResource AppSoftCardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Usuarios"
-                                           FontSize="16"
-                                           FontWeight="Bold"
-                                           Foreground="{StaticResource TextPrimaryBrush}" />
+                    <TextBlock Grid.Row="0"
+                               Text="Gestión de usuarios"
+                               Style="{StaticResource AppSectionTitleStyle}" />
 
-                                <TextBlock Margin="0,14,0,0"
-                                           Text="Ver usuarios del sistema"
-                                           FontSize="14"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                    <Border Grid.Row="2"
+                            Style="{StaticResource AppSoftCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Usuarios"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
 
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="Crear nuevos usuarios"
-                                           FontSize="14"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Border>
+                            <TextBlock Margin="0,14,0,0"
+                                       Text="Ver usuarios del sistema"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
 
-                        <Button Grid.Row="4"
-                                x:Name="OpenUsersButton"
-                                Width="210"
-                                Content="Abrir gestión de usuarios"
-                                HorizontalAlignment="Left"
-                                Style="{StaticResource AppPrimaryButtonStyle}"
-                                Click="OpenUsersButton_Click" />
-                    </Grid>
-                </Border>
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Crear nuevos usuarios"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
 
-                <Border Width="470"
-                        Height="300"
-                        Margin="0,0,0,18"
-                        Style="{StaticResource AppCardBorderStyle}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="*" />
-                            <RowDefinition Height="18" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Editar usuarios existentes"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
 
-                        <TextBlock Grid.Row="0"
-                                   Text="Historial de fichajes"
-                                   Style="{StaticResource AppSectionTitleStyle}" />
+                    <Button Grid.Row="4"
+                            x:Name="OpenUsersButton"
+                            Width="210"
+                            Content="Abrir gestión de usuarios"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource AppPrimaryButtonStyle}"
+                            Click="OpenUsersButton_Click" />
+                </Grid>
+            </Border>
 
-                        <Border Grid.Row="2"
-                                Style="{StaticResource AppSoftCardBorderStyle}">
-                            <StackPanel>
-                                <TextBlock Text="Historial"
-                                           FontSize="16"
-                                           FontWeight="Bold"
-                                           Foreground="{StaticResource TextPrimaryBrush}" />
+            <Border Grid.Column="2"
+                    Style="{StaticResource AppCardBorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="18" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
 
-                                <TextBlock Margin="0,14,0,0"
-                                           Text="Filtrar por usuario"
-                                           FontSize="14"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                    <TextBlock Grid.Row="0"
+                               Text="Historial de fichajes"
+                               Style="{StaticResource AppSectionTitleStyle}" />
 
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="Filtrar por fechas"
-                                           FontSize="14"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
+                    <Border Grid.Row="2"
+                            Style="{StaticResource AppSoftCardBorderStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Historial"
+                                       FontSize="16"
+                                       FontWeight="Bold"
+                                       Foreground="{StaticResource TextPrimaryBrush}" />
 
-                                <TextBlock Margin="0,8,0,0"
-                                           Text="Consultar detalle del día"
-                                           FontSize="14"
-                                           Foreground="{StaticResource TextSecondaryBrush}" />
-                            </StackPanel>
-                        </Border>
+                            <TextBlock Margin="0,14,0,0"
+                                       Text="Filtrar por usuario"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
 
-                        <Button Grid.Row="4"
-                                x:Name="OpenHistoryButton"
-                                Width="210"
-                                Content="Abrir historial"
-                                HorizontalAlignment="Left"
-                                Style="{StaticResource AppPrimaryButtonStyle}"
-                                Click="OpenHistoryButton_Click" />
-                    </Grid>
-                </Border>
-            </WrapPanel>
-        </ScrollViewer>
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Filtrar por fechas"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+
+                            <TextBlock Margin="0,8,0,0"
+                                       Text="Consultar detalle del día"
+                                       FontSize="14"
+                                       Foreground="{StaticResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Button Grid.Row="4"
+                            x:Name="OpenHistoryButton"
+                            Width="210"
+                            Content="Abrir historial"
+                            HorizontalAlignment="Left"
+                            Style="{StaticResource AppPrimaryButtonStyle}"
+                            Click="OpenHistoryButton_Click" />
+                </Grid>
+            </Border>
+        </Grid>
     </Grid>
 </Window>

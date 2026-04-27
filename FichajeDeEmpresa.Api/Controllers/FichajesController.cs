@@ -86,7 +86,16 @@ public class FichajesController : ControllerBase
         [FromQuery] DateTime? fromDate,
         [FromQuery] DateTime? toDate)
     {
-        var result = await _fichajeService.GetHistoryAsync(userId, fromDate, toDate);
+        if (!fromDate.HasValue || !toDate.HasValue)
+        {
+            return BadRequest(new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = false,
+                Message = "Debes indicar la fecha desde y la fecha hasta."
+            });
+        }
+
+        var result = await _fichajeService.GetHistoryAsync(userId, fromDate.Value, toDate.Value);
 
         if (!result.IsSuccess)
         {

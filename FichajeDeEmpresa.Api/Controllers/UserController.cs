@@ -53,4 +53,43 @@ public class UsersController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPost("{userId:int}/deactivate")]
+    public async Task<ActionResult<UserOperationResponseDto>> DeactivateUserAsync(int userId)
+    {
+        var result = await _authService.SetUserActiveAsync(userId, false);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpPost("{userId:int}/activate")]
+    public async Task<ActionResult<UserOperationResponseDto>> ActivateUserAsync(int userId)
+    {
+        var result = await _authService.SetUserActiveAsync(userId, true);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
+    [HttpDelete("{userId:int}")]
+    public async Task<ActionResult<UserOperationResponseDto>> DeleteUserAsync(int userId)
+    {
+        var result = await _authService.DeleteUserAsync(userId);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
 }

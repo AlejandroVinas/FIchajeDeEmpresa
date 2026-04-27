@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,6 +11,7 @@ namespace FichajeDeEmpresa.App;
 public partial class FichajeHistoryWindow : Window
 {
     private readonly ApiClient _apiClient = new();
+    private readonly List<AdminHistoryDayListItem> _allHistoryItems = [];
     private bool _isBusy;
 
     public FichajeHistoryWindow()
@@ -119,26 +121,24 @@ public partial class FichajeHistoryWindow : Window
 
         if (!result.IsSuccess)
         {
+            _allHistoryItems.Clear();
             HistoryListBox.ItemsSource = null;
             EmptyStateBorder.Visibility = Visibility.Collapsed;
             ShowMessage(result.Message);
             return;
         }
 
-        var items = result.Days
-            .Select(BuildDayListItem)
-            .ToList();
+        _allHistoryItems.Clear();
+        _allHistoryItems.AddRange(result.Days.Select(BuildDayListItem));
 
-        HistoryListBox.ItemsSource = items;
-        EmptyStateBorder.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        HistoryListBox.ItemsSource = _allHistoryItems;
+        EmptyStateBorder.Visibility = _allHistoryItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
-        var totalWorkedSeconds = result.Days.Sum(d => d.WorkedSeconds);
-        var totalExtraSeconds = result.Days.Sum(d => d.ExtraSeconds);
+        var totalWorkedSeconds = _allHistoryItems.Sum(i => i.DayData.WorkedSeconds);
+        var totalExtraSeconds = _allHistoryItems.Sum(i => i.DayData.ExtraSeconds);
 
         HistorySummaryTextBlock.Text =
-            $"Resultados: {result.Days.Count} jornadas · " +
-            $"Trabajado total: {FormatWorkedTime(totalWorkedSeconds)} · " +
-            $"Horas extra totales: {FormatWorkedTime(totalExtraSeconds)}";
+            $"Resultados: {_allHistoryItems.Count} jornadas · Trabajado total: {FormatWorkedTime(totalWorkedSeconds)} · Horas extra totales: {FormatWorkedTime(totalExtraSeconds)}";
     }
 
     private static AdminHistoryDayListItem BuildDayListItem(AdminFichajeHistoryDayDto day)

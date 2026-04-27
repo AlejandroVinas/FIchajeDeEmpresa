@@ -244,6 +244,92 @@ public class ApiClient
         }
     }
 
+    public async Task<UserOperationResponseDto> DeactivateUserAsync(int userId)
+    {
+        return await PostUserActionAsync($"api/users/{userId}/deactivate");
+    }
+
+    public async Task<UserOperationResponseDto> ActivateUserAsync(int userId)
+    {
+        return await PostUserActionAsync($"api/users/{userId}/activate");
+    }
+
+    public async Task<UserOperationResponseDto> DeleteUserAsync(int userId)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/users/{userId}");
+            var result = await response.Content.ReadFromJsonAsync<UserOperationResponseDto>();
+
+            if (result is null)
+            {
+                return new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo borrar el usuario.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new UserOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
+    private async Task<UserOperationResponseDto> PostUserActionAsync(string url)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsync(url, null);
+            var result = await response.Content.ReadFromJsonAsync<UserOperationResponseDto>();
+
+            if (result is null)
+            {
+                return new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo completar la operación sobre el usuario.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new UserOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
     private async Task<FichajeOperationResponseDto> PostFichajeAsync(string url, RegisterFichajeRequestDto request)
     {
         try

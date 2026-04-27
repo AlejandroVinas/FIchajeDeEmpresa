@@ -34,6 +34,14 @@
     <SolidColorBrush x:Key="InfoBackgroundBrush" Color="#FFF8E1" />
     <SolidColorBrush x:Key="InfoBorderBrush" Color="#E8D089" />
 
+    <!-- COLORES PARA CALENDARIO -->
+    <SolidColorBrush x:Key="CalendarBackgroundBrush" Color="#FFFDF9" />
+    <SolidColorBrush x:Key="CalendarHeaderBrush" Color="#FBF3D8" />
+    <SolidColorBrush x:Key="CalendarHoverBrush" Color="#F8E8AE" />
+    <SolidColorBrush x:Key="CalendarSelectedBrush" Color="#D4A62A" />
+    <SolidColorBrush x:Key="CalendarSelectedTextBrush" Color="#2F2411" />
+    <SolidColorBrush x:Key="CalendarInactiveTextBrush" Color="#B3A58D" />
+
     <!-- CONTENEDORES -->
     <Style x:Key="AppCardBorderStyle" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource CardBackgroundBrush}" />
@@ -151,6 +159,35 @@
         <Setter Property="BorderThickness" Value="1" />
     </Style>
 
+    <!-- CALENDARIO -->
+    <Style x:Key="AppCalendarButtonStyle" TargetType="CalendarButton">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Background" Value="{StaticResource CalendarHeaderBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrushSoft}" />
+        <Setter Property="BorderThickness" Value="0" />
+    </Style>
+
+    <Style x:Key="AppCalendarDayButtonStyle" TargetType="CalendarDayButton">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="2" />
+        <Setter Property="Padding" Value="4" />
+    </Style>
+
+    <Style x:Key="AppCalendarStyle" TargetType="Calendar">
+        <Setter Property="Background" Value="{StaticResource CalendarBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrushStrong}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CalendarButtonStyle" Value="{StaticResource AppCalendarButtonStyle}" />
+        <Setter Property="CalendarDayButtonStyle" Value="{StaticResource AppCalendarDayButtonStyle}" />
+        <Setter Property="Padding" Value="8" />
+    </Style>
+
     <Style x:Key="AppDatePickerStyle" TargetType="DatePicker">
         <Setter Property="Height" Value="42" />
         <Setter Property="FontSize" Value="14" />
@@ -158,5 +195,7 @@
         <Setter Property="BorderBrush" Value="{StaticResource BorderBrushStrong}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Background" Value="White" />
+        <Setter Property="Padding" Value="6,2" />
+        <Setter Property="CalendarStyle" Value="{StaticResource AppCalendarStyle}" />
     </Style>
 </ResourceDictionary>

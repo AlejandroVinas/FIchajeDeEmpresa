@@ -13,5 +13,9 @@ public interface IAuthService
 
     Task<UserOperationResponseDto> UpdateUserAsync(int userId, UpdateUserRequestDto request);
 
+    Task<UserOperationResponseDto> SetUserActiveAsync(int userId, bool isActive);
+
+    Task<UserOperationResponseDto> DeleteUserAsync(int userId);
+
     Task<UserSummaryDto?> GetUserByIdAsync(int userId);
 }

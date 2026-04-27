@@ -8,8 +8,8 @@ public class InMemoryAuthService : IAuthService
     private readonly object _lock = new();
     private readonly List<UserRecord> _users =
     [
-        new UserRecord(1, "Administrador", "admin", "admin", "Admin", 8m),
-        new UserRecord(2, "Usuario", "user", "user", "User", 8m)
+        new UserRecord(1, "Administrador", "admin", "admin", "Admin", 8m, true),
+        new UserRecord(2, "Usuario", "user", "user", "User", 8m, true)
     ];
 
     private int _nextUserId = 3;
@@ -37,6 +37,15 @@ public class InMemoryAuthService : IAuthService
                 {
                     IsSuccess = false,
                     Message = "Usuario o contraseña incorrectos."
+                });
+            }
+
+            if (!user.IsActive)
+            {
+                return Task.FromResult(new LoginResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "Este usuario está desactivado y no puede iniciar sesión."
                 });
             }
 
@@ -98,7 +107,8 @@ public class InMemoryAuthService : IAuthService
                 request.UserName.Trim(),
                 request.Password,
                 NormalizeRole(request.Role),
-                request.ExpectedDailyHours);
+                request.ExpectedDailyHours,
+                true);
 
             _users.Add(user);
 
@@ -158,7 +168,8 @@ public class InMemoryAuthService : IAuthService
                 request.UserName.Trim(),
                 updatedPassword,
                 NormalizeRole(request.Role),
-                request.ExpectedDailyHours);
+                request.ExpectedDailyHours,
+                current.IsActive);
 
             _users[index] = updated;
 
@@ -167,6 +178,98 @@ public class InMemoryAuthService : IAuthService
                 IsSuccess = true,
                 Message = "Usuario actualizado correctamente.",
                 User = MapUser(updated)
+            });
+        }
+    }
+
+    public Task<UserOperationResponseDto> SetUserActiveAsync(int userId, bool isActive)
+    {
+        lock (_lock)
+        {
+            var index = _users.FindIndex(u => u.UserId == userId);
+
+            if (index < 0)
+            {
+                return Task.FromResult(new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "No se ha encontrado el usuario."
+                });
+            }
+
+            var current = _users[index];
+
+            if (current.IsActive == isActive)
+            {
+                return Task.FromResult(new UserOperationResponseDto
+                {
+                    IsSuccess = true,
+                    Message = isActive ? "El usuario ya estaba activo." : "El usuario ya estaba desactivado.",
+                    User = MapUser(current)
+                });
+            }
+
+            if (!isActive && string.Equals(current.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var activeAdmins = _users.Count(u => u.IsActive && string.Equals(u.Role, "Admin", StringComparison.OrdinalIgnoreCase));
+
+                if (activeAdmins <= 1)
+                {
+                    return Task.FromResult(new UserOperationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = "No puedes desactivar al último administrador activo."
+                    });
+                }
+            }
+
+            var updated = current with { IsActive = isActive };
+            _users[index] = updated;
+
+            return Task.FromResult(new UserOperationResponseDto
+            {
+                IsSuccess = true,
+                Message = isActive ? "Usuario reactivado correctamente." : "Usuario desactivado correctamente.",
+                User = MapUser(updated)
+            });
+        }
+    }
+
+    public Task<UserOperationResponseDto> DeleteUserAsync(int userId)
+    {
+        lock (_lock)
+        {
+            var user = _users.FirstOrDefault(u => u.UserId == userId);
+
+            if (user is null)
+            {
+                return Task.FromResult(new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "No se ha encontrado el usuario."
+                });
+            }
+
+            if (user.IsActive && string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var activeAdmins = _users.Count(u => u.IsActive && string.Equals(u.Role, "Admin", StringComparison.OrdinalIgnoreCase));
+
+                if (activeAdmins <= 1)
+                {
+                    return Task.FromResult(new UserOperationResponseDto
+                    {
+                        IsSuccess = false,
+                        Message = "No puedes borrar al último administrador activo."
+                    });
+                }
+            }
+
+            _users.Remove(user);
+
+            return Task.FromResult(new UserOperationResponseDto
+            {
+                IsSuccess = true,
+                Message = "Usuario borrado correctamente."
             });
         }
     }
@@ -250,7 +353,8 @@ public class InMemoryAuthService : IAuthService
             FullName = user.FullName,
             UserName = user.UserName,
             Role = user.Role,
-            ExpectedDailyHours = user.ExpectedDailyHours
+            ExpectedDailyHours = user.ExpectedDailyHours,
+            IsActive = user.IsActive
         };
     }
 
@@ -260,5 +364,6 @@ public class InMemoryAuthService : IAuthService
         string UserName,
         string Password,
         string Role,
-        decimal ExpectedDailyHours);
+        decimal ExpectedDailyHours,
+        bool IsActive);
 }

@@ -101,8 +101,9 @@
                     </Grid>
 
                     <StackPanel Grid.Row="4"
-                                Width="240"
-                                HorizontalAlignment="Left">
+                                HorizontalAlignment="Left"
+                                MinWidth="220"
+                                MaxWidth="320">
                         <TextBlock Text="Horas diarias objetivo"
                                    Style="{StaticResource AppFieldLabelStyle}" />
                         <TextBox x:Name="ExpectedDailyHoursTextBox"

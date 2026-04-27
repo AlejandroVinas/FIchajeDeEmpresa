@@ -18,29 +18,6 @@ public partial class MainWindow : Window
     private readonly ApiClient _apiClient = new();
     private readonly DispatcherTimer _liveTimer;
 
-    private readonly Brush _workingTextBrush = CreateBrush("#1E6B3A");
-    private readonly Brush _workingBackgroundBrush = CreateBrush("#E8F7EE");
-    private readonly Brush _workingBorderBrush = CreateBrush("#9BD3AE");
-
-    private readonly Brush _pausedTextBrush = CreateBrush("#B45309");
-    private readonly Brush _pausedBackgroundBrush = CreateBrush("#FFF7ED");
-    private readonly Brush _pausedBorderBrush = CreateBrush("#F3C58D");
-
-    private readonly Brush _outsideTextBrush = CreateBrush("#A33A3A");
-    private readonly Brush _outsideBackgroundBrush = CreateBrush("#FDECEC");
-    private readonly Brush _outsideBorderBrush = CreateBrush("#F2B8B5");
-
-    private readonly Brush _successMessageBackgroundBrush = CreateBrush("#EEF6FF");
-    private readonly Brush _successMessageBorderBrush = CreateBrush("#BFD7FF");
-    private readonly Brush _successMessageTextBrush = CreateBrush("#1D4F91");
-
-    private readonly Brush _errorMessageBackgroundBrush = CreateBrush("#FDECEC");
-    private readonly Brush _errorMessageBorderBrush = CreateBrush("#F2B8B5");
-    private readonly Brush _errorMessageTextBrush = CreateBrush("#9F1239");
-
-    private readonly Brush _defaultMetricBrush = CreateBrush("#17212B");
-    private readonly Brush _extraMetricBrush = CreateBrush("#B26A00");
-
     private bool _isBusy;
     private bool _isLoadingSummary;
     private DaySummaryDto _currentSummary = new();
@@ -65,7 +42,7 @@ public partial class MainWindow : Window
         _liveTimer.Tick += LiveTimer_Tick;
 
         LoadUserData();
-        ShowMessage(string.Empty, false);
+        ShowMessage(string.Empty, MessageTone.Info);
 
         Loaded += MainWindow_Loaded;
         Closed += MainWindow_Closed;
@@ -148,6 +125,7 @@ public partial class MainWindow : Window
         SessionDailyHoursTextBlock.Text = $"Jornada objetivo: {_loggedUser.ExpectedDailyHours:0.##} horas/día";
 
         DailyTargetValueTextBlock.Text = $"{_loggedUser.ExpectedDailyHours:0.##} horas/día";
+        CurrentSituationTextBlock.Text = "Todavía no has empezado tu jornada.";
     }
 
     private async Task LoadTodaySummaryAsync(bool showError, bool showSuccess, bool useBusyState)
@@ -177,7 +155,7 @@ public partial class MainWindow : Window
         {
             if (showError)
             {
-                ShowMessage(result.Message, true);
+                ShowMessage(result.Message, MessageTone.Error);
             }
 
             return;
@@ -187,7 +165,7 @@ public partial class MainWindow : Window
 
         if (showSuccess && !string.IsNullOrWhiteSpace(result.Message))
         {
-            ShowMessage(result.Message, false);
+            ShowMessage("Resumen actualizado correctamente.", MessageTone.Info);
         }
     }
 
@@ -219,7 +197,7 @@ public partial class MainWindow : Window
 
     private async Task RegisterFichajeAsync(UserFichajeAction action, string? comment)
     {
-        ShowMessage(string.Empty, false);
+        ShowMessage(string.Empty, MessageTone.Info);
         SetBusyState(true);
 
         var request = new RegisterFichajeRequestDto
@@ -248,7 +226,13 @@ public partial class MainWindow : Window
             ApplySummary(result.Summary);
         }
 
-        ShowMessage(result.Message, !result.IsSuccess);
+        if (!result.IsSuccess)
+        {
+            ShowMessage(result.Message, MessageTone.Error);
+            return;
+        }
+
+        ShowMessage(GetFriendlyActionMessage(action), GetToneForAction(action));
     }
 
     private void ApplySummary(DaySummaryDto summary)
@@ -260,6 +244,7 @@ public partial class MainWindow : Window
         _loadedSummaryDate = DateTime.Today;
 
         ApplyStatus(summary);
+        UpdateCurrentSituation(summary);
         UpdateLiveMetrics();
 
         MovementsListBox.ItemsSource = BuildMovementLines(summary);
@@ -286,16 +271,43 @@ public partial class MainWindow : Window
         {
             ExtraHoursCardBorder.Visibility = Visibility.Visible;
             ExtraHoursValueTextBlock.Text = FormatWorkedTime(extraSeconds);
-            ExtraHoursValueTextBlock.Foreground = _extraMetricBrush;
-            ExtraHoursHintTextBlock.Text = "Hay horas extra registradas hoy.";
-            ExtraHoursHintTextBlock.Foreground = _extraMetricBrush;
+            ExtraHoursHintTextBlock.Text = "Hoy has generado horas extra.";
         }
         else
         {
             ExtraHoursCardBorder.Visibility = Visibility.Collapsed;
             ExtraHoursValueTextBlock.Text = "00:00:00";
-            ExtraHoursValueTextBlock.Foreground = _defaultMetricBrush;
+            ExtraHoursHintTextBlock.Text = "Hoy has generado horas extra.";
         }
+    }
+
+    private void UpdateCurrentSituation(DaySummaryDto summary)
+    {
+        if (summary.Movements.Count == 0)
+        {
+            CurrentSituationTextBlock.Text = "Todavía no has empezado tu jornada.";
+            return;
+        }
+
+        if (summary.IsWorking)
+        {
+            CurrentSituationTextBlock.Text = "Tu jornada está en curso.";
+            return;
+        }
+
+        if (summary.IsPaused)
+        {
+            CurrentSituationTextBlock.Text = "Tu jornada está en pausa.";
+            return;
+        }
+
+        if (summary.ExtraSecondsToday > 0)
+        {
+            CurrentSituationTextBlock.Text = "Tu jornada de hoy está cerrada y has generado horas extra.";
+            return;
+        }
+
+        CurrentSituationTextBlock.Text = "Tu jornada de hoy está cerrada.";
     }
 
     private void ApplyStatus(DaySummaryDto summary)
@@ -303,25 +315,25 @@ public partial class MainWindow : Window
         if (summary.IsWorking)
         {
             StatusBadgeTextBlock.Text = "TRABAJANDO";
-            StatusBadgeTextBlock.Foreground = _workingTextBrush;
-            StatusBadgeBorder.Background = _workingBackgroundBrush;
-            StatusBadgeBorder.BorderBrush = _workingBorderBrush;
+            StatusBadgeTextBlock.Foreground = GetBrush("SuccessBrush", "#2F7D4A");
+            StatusBadgeBorder.Background = GetBrush("SuccessBackgroundBrush", "#EAF7EE");
+            StatusBadgeBorder.BorderBrush = GetBrush("SuccessBorderBrush", "#B8DDBF");
             return;
         }
 
         if (summary.IsPaused)
         {
             StatusBadgeTextBlock.Text = "EN PAUSA";
-            StatusBadgeTextBlock.Foreground = _pausedTextBrush;
-            StatusBadgeBorder.Background = _pausedBackgroundBrush;
-            StatusBadgeBorder.BorderBrush = _pausedBorderBrush;
+            StatusBadgeTextBlock.Foreground = GetBrush("WarningBrush", "#A56A00");
+            StatusBadgeBorder.Background = GetBrush("WarningBackgroundBrush", "#FFF4D9");
+            StatusBadgeBorder.BorderBrush = GetBrush("WarningBorderBrush", "#E9C66B");
             return;
         }
 
         StatusBadgeTextBlock.Text = "FUERA";
-        StatusBadgeTextBlock.Foreground = _outsideTextBrush;
-        StatusBadgeBorder.Background = _outsideBackgroundBrush;
-        StatusBadgeBorder.BorderBrush = _outsideBorderBrush;
+        StatusBadgeTextBlock.Foreground = GetBrush("DangerBrush", "#A33A3A");
+        StatusBadgeBorder.Background = GetBrush("DangerBackgroundBrush", "#FDECEC");
+        StatusBadgeBorder.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
     }
 
     private List<string> BuildMovementLines(DaySummaryDto summary)
@@ -330,7 +342,7 @@ public partial class MainWindow : Window
         {
             return
             [
-                "Todavía no hay fichajes registrados hoy."
+                "Aún no has registrado movimientos hoy."
             ];
         }
 
@@ -369,7 +381,7 @@ public partial class MainWindow : Window
         PauseResumeButton.Content = _currentSummary.IsPaused ? "Reanudar" : "Pausar";
     }
 
-    private void ShowMessage(string message, bool isError)
+    private void ShowMessage(string message, MessageTone tone)
     {
         if (string.IsNullOrWhiteSpace(message))
         {
@@ -381,29 +393,72 @@ public partial class MainWindow : Window
         MessageBorder.Visibility = Visibility.Visible;
         MessageTextBlock.Text = message;
 
-        if (isError)
+        switch (tone)
         {
-            MessageBorder.Background = _errorMessageBackgroundBrush;
-            MessageBorder.BorderBrush = _errorMessageBorderBrush;
-            MessageTextBlock.Foreground = _errorMessageTextBrush;
+            case MessageTone.Success:
+                MessageBorder.Background = GetBrush("SuccessBackgroundBrush", "#EAF7EE");
+                MessageBorder.BorderBrush = GetBrush("SuccessBorderBrush", "#B8DDBF");
+                MessageTextBlock.Foreground = GetBrush("SuccessBrush", "#2F7D4A");
+                break;
+
+            case MessageTone.Warning:
+                MessageBorder.Background = GetBrush("WarningBackgroundBrush", "#FFF4D9");
+                MessageBorder.BorderBrush = GetBrush("WarningBorderBrush", "#E9C66B");
+                MessageTextBlock.Foreground = GetBrush("WarningBrush", "#A56A00");
+                break;
+
+            case MessageTone.Error:
+                MessageBorder.Background = GetBrush("DangerBackgroundBrush", "#FDECEC");
+                MessageBorder.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
+                MessageTextBlock.Foreground = GetBrush("DangerBrush", "#A33A3A");
+                break;
+
+            default:
+                MessageBorder.Background = GetBrush("InfoBackgroundBrush", "#FFF8E1");
+                MessageBorder.BorderBrush = GetBrush("InfoBorderBrush", "#E8D089");
+                MessageTextBlock.Foreground = GetBrush("InfoBrush", "#7B5B12");
+                break;
         }
-        else
+    }
+
+    private Brush GetBrush(string resourceKey, string fallbackHex)
+    {
+        if (TryFindResource(resourceKey) is Brush brush)
         {
-            MessageBorder.Background = _successMessageBackgroundBrush;
-            MessageBorder.BorderBrush = _successMessageBorderBrush;
-            MessageTextBlock.Foreground = _successMessageTextBrush;
+            return brush;
         }
+
+        return (Brush)new BrushConverter().ConvertFromString(fallbackHex)!;
+    }
+
+    private static string GetFriendlyActionMessage(UserFichajeAction action)
+    {
+        return action switch
+        {
+            UserFichajeAction.Entry => "Has iniciado tu jornada correctamente.",
+            UserFichajeAction.Pause => "Has pausado tu jornada.",
+            UserFichajeAction.Resume => "Has reanudado tu jornada.",
+            UserFichajeAction.Exit => "Has finalizado tu jornada correctamente.",
+            _ => "Acción realizada correctamente."
+        };
+    }
+
+    private static MessageTone GetToneForAction(UserFichajeAction action)
+    {
+        return action switch
+        {
+            UserFichajeAction.Pause => MessageTone.Warning,
+            UserFichajeAction.Entry => MessageTone.Success,
+            UserFichajeAction.Resume => MessageTone.Success,
+            UserFichajeAction.Exit => MessageTone.Success,
+            _ => MessageTone.Info
+        };
     }
 
     private static string FormatWorkedTime(int workedSeconds)
     {
         var time = TimeSpan.FromSeconds(workedSeconds);
         return $"{time:hh\\:mm\\:ss}";
-    }
-
-    private static SolidColorBrush CreateBrush(string hexColor)
-    {
-        return (SolidColorBrush)new BrushConverter().ConvertFromString(hexColor)!;
     }
 
     private static string GetGreetingForCurrentTime()
@@ -429,5 +484,13 @@ public partial class MainWindow : Window
         Pause,
         Resume,
         Exit
+    }
+
+    private enum MessageTone
+    {
+        Info,
+        Success,
+        Warning,
+        Error
     }
 }

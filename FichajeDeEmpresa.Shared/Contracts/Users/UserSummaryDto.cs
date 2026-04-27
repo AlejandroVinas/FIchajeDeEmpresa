@@ -11,4 +11,6 @@ public class UserSummaryDto
     public string Role { get; set; } = string.Empty;
 
     public decimal ExpectedDailyHours { get; set; }
+
+    public bool IsActive { get; set; }
 }
