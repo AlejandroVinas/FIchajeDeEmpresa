@@ -6,7 +6,7 @@
   "private": true,
   "scripts": {
     "dev": "electron .",
-    "seed": "node ./backend/seed.js",
+    "seed": "electron ./backend/seed.js",
     "backend:dev": "node ./backend/server.js",
     "rebuild": "electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps",

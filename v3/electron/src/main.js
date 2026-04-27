@@ -1,4 +1,4 @@
-const path = require('path');
+﻿const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, ipcMain, Menu, shell, dialog } = require('electron');
 const { getFreePort } = require('./portFinder');
@@ -80,7 +80,7 @@ async function resolveRendererTarget() {
     return { type: 'file', value: distPath };
   }
 
-  throw new Error('No encontré ni Vite en :5173 ni admin_panel/dist/index.html');
+  throw new Error('No encontrÃ© ni Vite en :5173 ni admin_panel/dist/index.html');
 }
 
 function createWindow() {
@@ -105,9 +105,7 @@ function createWindow() {
     return { action: 'deny' };
   });
 
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-  });
+  mainWindow.once('ready-to-show', () => { mainWindow.show(); mainWindow.webContents.openDevTools(); });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -177,7 +175,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     dialog.showErrorBox('Error al iniciar Fichaje', `${error.message}
 
-Revisa que el panel esté compilado o que Vite esté arrancado.`);
+Revisa que el panel estÃ© compilado o que Vite estÃ© arrancado.`);
     app.quit();
     return;
   }
@@ -207,3 +205,6 @@ app.on('before-quit', () => {
     backendServer = null;
   }
 });
+
+
+
