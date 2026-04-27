@@ -1,0 +1,9 @@
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../api/client';
+
+export default function AuditoriaPage() {
+  const [rows, setRows] = useState([]); const [error, setError] = useState('');
+  useEffect(()=>{ apiFetch('/auditoria').then((r)=>setRows(r||[])).catch((err)=>setError(err.message || 'No se pudo cargar auditoria')); },[]);
+  return <div className="grid gap-6"><section><h2 className="text-2xl font-bold">Auditoria</h2><p className="text-sm text-gray-500">Registro de cambios importantes realizados en la aplicacion.</p></section>{error ? <div className="card p-4 text-red-600">{error}</div> : null}<section className="card overflow-hidden"><div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200 text-sm"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Fecha</th><th className="px-4 py-3 text-left">Usuario</th><th className="px-4 py-3 text-left">Accion</th><th className="px-4 py-3 text-left">Entidad</th><th className="px-4 py-3 text-left">Detalles</th></tr></thead><tbody className="divide-y divide-gray-100 bg-white">{rows.map((r)=><tr key={r.id}><td className="px-4 py-3">{formatDate(r.created_at)}</td><td className="px-4 py-3">{r.actor_nombre || r.actor_email || 'Sistema'}</td><td className="px-4 py-3 font-medium">{r.action}</td><td className="px-4 py-3">{r.entity}{r.entity_id ? ` #${r.entity_id}` : ''}</td><td className="px-4 py-3 font-mono text-xs">{JSON.stringify(r.details || {})}</td></tr>)}{!rows.length ? <tr><td colSpan="5" className="px-4 py-8 text-center text-gray-500">No hay registros.</td></tr> : null}</tbody></table></div></section></div>;
+}
+function formatDate(value){ if(!value) return 'â€”'; return new Intl.DateTimeFormat('es-ES', { dateStyle:'short', timeStyle:'short' }).format(new Date(value)); }

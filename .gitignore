@@ -33,3 +33,25 @@ v5/**/*.sqlite3
 v5/**/*.log
 v5/electron/.env
 v5/backend/.env
+
+# V6 - dependencias
+v6/admin_panel/node_modules/
+v6/electron/node_modules/
+
+# V6 - builds generadas
+v6/admin_panel/dist/
+v6/electron/dist/
+v6/electron/release/
+v6/electron/.vite/
+v6/electron/.runtime/
+
+# V6 - base de datos, logs y entorno local
+v6/**/*.db
+v6/**/*.sqlite
+v6/**/*.sqlite3
+v6/**/*.log
+v6/electron/.env
+v6/backend/.env
+
+# Backups temporales
+*.bak

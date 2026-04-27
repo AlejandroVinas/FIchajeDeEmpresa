@@ -1,0 +1,11 @@
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../api/client';
+
+export default function BackupsPage() {
+  const [rows, setRows] = useState([]); const [message, setMessage] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
+  async function load(){ try { setRows(await apiFetch('/backups') || []); } catch(err){ setError(err.message || 'No se pudieron cargar backups'); } }
+  useEffect(()=>{ load(); },[]);
+  async function create(){ setBusy(true); setError(''); setMessage(''); try { const r = await apiFetch('/backups', { method:'POST' }); setMessage(`Backup creado: ${r.name}`); await load(); } catch(err){ setError(err.message || 'No se pudo crear backup'); } finally { setBusy(false); } }
+  return <div className="grid gap-6"><section className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h2 className="text-2xl font-bold">Copias de seguridad</h2><p className="text-sm text-gray-500">Crea copias manuales de la base de datos local.</p></div><button className="btn btn-primary" onClick={create} disabled={busy}>{busy ? 'Creandoâ€¦' : 'Crear backup ahora'}</button></section>{message ? <div className="card p-4 text-green-700">{message}</div> : null}{error ? <div className="card p-4 text-red-600">{error}</div> : null}<section className="card overflow-hidden"><table className="min-w-full divide-y divide-gray-200 text-sm"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Archivo</th><th className="px-4 py-3 text-left">Tamano</th><th className="px-4 py-3 text-left">Ruta</th></tr></thead><tbody className="divide-y divide-gray-100 bg-white">{rows.map((r)=><tr key={r.name}><td className="px-4 py-3 font-medium">{r.name}</td><td className="px-4 py-3">{formatBytes(r.size)}</td><td className="px-4 py-3 break-all font-mono text-xs">{r.path}</td></tr>)}{!rows.length ? <tr><td colSpan="3" className="px-4 py-8 text-center text-gray-500">Todavia no hay backups.</td></tr> : null}</tbody></table></section></div>;
+}
+function formatBytes(n){ if(!n) return '0 B'; if(n < 1024) return `${n} B`; if(n < 1024*1024) return `${(n/1024).toFixed(1)} KB`; return `${(n/1024/1024).toFixed(1)} MB`; }

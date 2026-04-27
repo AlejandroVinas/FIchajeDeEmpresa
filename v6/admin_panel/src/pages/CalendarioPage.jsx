@@ -1,0 +1,18 @@
+import { useEffect, useState } from 'react';
+import { apiFetch } from '../api/client';
+import { useAuth } from '../context/AuthContext';
+
+export default function CalendarioPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [rows, setRows] = useState([]);
+  const [form, setForm] = useState({ fecha: new Date().toISOString().slice(0,10), tipo: 'festivo', descripcion: '', horas_objetivo: '' });
+  const [error, setError] = useState('');
+  async function load(){ try { setRows(await apiFetch('/calendario') || []); } catch(err){ setError(err.message || 'No se pudo cargar calendario'); } }
+  useEffect(()=>{ load(); },[]);
+  function update(k,v){ setForm((p)=>({...p,[k]:v})); }
+  async function save(e){ e.preventDefault(); await apiFetch('/calendario', { method:'POST', body: JSON.stringify(form) }); setForm((p)=>({...p, descripcion:''})); await load(); }
+  async function remove(id){ if (!window.confirm('Â¿Eliminar este dia?')) return; await apiFetch(`/calendario/${id}`, { method:'DELETE' }); await load(); }
+  return <div className="grid gap-6"><section><h2 className="text-2xl font-bold">Calendario laboral</h2><p className="text-sm text-gray-500">Festivos, vacaciones, dias especiales y horas objetivo.</p></section>{error ? <div className="card p-4 text-red-600">{error}</div> : null}{isAdmin ? <form onSubmit={save} className="card grid gap-4 p-5 md:grid-cols-5"><Field label="Fecha"><input className="input" type="date" value={form.fecha} onChange={(e)=>update('fecha',e.target.value)} required /></Field><Field label="Tipo"><select className="input" value={form.tipo} onChange={(e)=>update('tipo',e.target.value)}><option value="laborable">Laborable</option><option value="festivo">Festivo</option><option value="vacaciones">Vacaciones</option><option value="especial">Especial</option></select></Field><Field label="Horas"><input className="input" type="number" step="0.25" value={form.horas_objetivo} onChange={(e)=>update('horas_objetivo',e.target.value)} placeholder="Opcional" /></Field><label className="grid gap-1 md:col-span-2"><span className="text-sm font-medium">Descripcion</span><input className="input" value={form.descripcion} onChange={(e)=>update('descripcion',e.target.value)} /></label><div className="md:col-span-5"><button className="btn btn-primary">Guardar dia</button></div></form> : null}<section className="card overflow-hidden"><div className="overflow-x-auto"><table className="min-w-full divide-y divide-gray-200 text-sm"><thead className="bg-gray-50"><tr><th className="px-4 py-3 text-left">Fecha</th><th className="px-4 py-3 text-left">Tipo</th><th className="px-4 py-3 text-left">Horas</th><th className="px-4 py-3 text-left">Descripcion</th>{isAdmin ? <th className="px-4 py-3 text-left">Acciones</th> : null}</tr></thead><tbody className="divide-y divide-gray-100 bg-white">{rows.map((r)=><tr key={r.id}><td className="px-4 py-3 font-mono">{r.fecha}</td><td className="px-4 py-3">{r.tipo}</td><td className="px-4 py-3">{r.horas_objetivo ?? 'â€”'}</td><td className="px-4 py-3">{r.descripcion || 'â€”'}</td>{isAdmin ? <td className="px-4 py-3"><button className="btn btn-danger" onClick={()=>remove(r.id)}>Eliminar</button></td> : null}</tr>)}{!rows.length ? <tr><td colSpan={isAdmin ? 5 : 4} className="px-4 py-8 text-center text-gray-500">No hay dias configurados.</td></tr> : null}</tbody></table></div></section></div>;
+}
+function Field({ label, children }) { return <label className="grid gap-1"><span className="text-sm font-medium">{label}</span>{children}</label>; }
