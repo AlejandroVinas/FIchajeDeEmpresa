@@ -4,6 +4,7 @@ const cookieParser = require('cookie-parser');
 const { PORT, CORS_ORIGINS } = require('./config');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const { ensureInitialAdmin } = require('./utils/bootstrapAdmin');
 
 function isAllowedOrigin(origin) {
   if (!origin) return true;
@@ -13,6 +14,7 @@ function isAllowedOrigin(origin) {
 }
 
 function createApp() {
+  ensureInitialAdmin();
   const app = express();
 
   if (process.env.TRUST_PROXY === 'true') app.set('trust proxy', 1);

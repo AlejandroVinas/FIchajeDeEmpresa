@@ -6,13 +6,29 @@ const { logAudit } = require('../utils/audit');
 
 function isAdmin(req) { return req.usuario?.role === 'admin'; }
 function isManager(req) { return ['admin', 'supervisor'].includes(req.usuario?.role); }
-function requireAdmin(req, res, next) { if (!isAdmin(req)) return res.status(403).json({ error: 'Solo administradores' }); next(); }
-function requireManager(req, res, next) { if (!isManager(req)) return res.status(403).json({ error: 'Solo administradores o supervisores' }); next(); }
+function requireAdmin(req, res, next) {
+  if (!isAdmin(req)) return res.status(403).json({ error: 'Solo administradores' });
+  next();
+}
+function requireManager(req, res, next) {
+  if (!isManager(req)) return res.status(403).json({ error: 'Solo administradores o supervisores' });
+  next();
+}
 
-function toNumberOrDefault(value, fallback) { const parsed = Number(value); return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback; }
-function cleanTime(value, fallback) { return typeof value === 'string' && /^\d{2}:\d{2}$/.test(value) ? value : fallback; }
-function cleanRole(value, fallback = 'empleado') { return ['admin', 'supervisor', 'empleado'].includes(value) ? value : fallback; }
-function cleanSupervisor(value) { const parsed = Number(value); return Number.isInteger(parsed) && parsed > 0 ? parsed : null; }
+function toNumberOrDefault(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+function cleanTime(value, fallback) {
+  return typeof value === 'string' && /^\d{2}:\d{2}$/.test(value) ? value : fallback;
+}
+function cleanRole(value, fallback = 'empleado') {
+  return ['admin', 'supervisor', 'empleado'].includes(value) ? value : fallback;
+}
+function cleanSupervisor(value) {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
 
 function publicEmpleado(row) {
   if (!row) return null;
@@ -37,7 +53,8 @@ function getEmpleadoById(id) {
   return db.prepare(`
     SELECT id, nombre, email, password_hash, role, supervisor_id, pin_hash, activo,
            horas_jornada, hora_entrada, hora_salida, horas_semanales, created_at, updated_at
-    FROM empleados WHERE id = ?
+    FROM empleados
+    WHERE id = ?
   `).get(id);
 }
 
@@ -45,31 +62,54 @@ router.use(auth);
 
 router.get('/', requireManager, (req, res, next) => {
   try {
+    const incluirInactivos =
+      req.query.incluirInactivos === '1' ||
+      req.query.incluirInactivos === 'true';
+
     let rows;
     if (req.usuario.role === 'supervisor') {
       rows = db.prepare(`
         SELECT id, nombre, email, role, supervisor_id, pin_hash, activo, horas_jornada,
                hora_entrada, hora_salida, horas_semanales, created_at, updated_at
         FROM empleados
-        WHERE supervisor_id = ? OR id = ?
+        WHERE (supervisor_id = ? OR id = ?)
+          AND (? = 1 OR activo = 1)
         ORDER BY activo DESC, nombre ASC
-      `).all(req.usuario.id, req.usuario.id);
+      `).all(req.usuario.id, req.usuario.id, incluirInactivos ? 1 : 0);
     } else {
       rows = db.prepare(`
         SELECT id, nombre, email, role, supervisor_id, pin_hash, activo, horas_jornada,
                hora_entrada, hora_salida, horas_semanales, created_at, updated_at
         FROM empleados
+        WHERE (? = 1 OR activo = 1)
         ORDER BY activo DESC, id DESC
-      `).all();
+      `).all(incluirInactivos ? 1 : 0);
     }
+
     res.json(rows.map(publicEmpleado));
-  } catch (err) { next(err); }
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post('/', requireAdmin, (req, res, next) => {
   try {
-    const { nombre, email, password, role = 'empleado', horas_jornada, hora_entrada, hora_salida, horas_semanales, supervisor_id, pin } = req.body;
-    if (!nombre || !email || !password) return res.status(400).json({ error: 'nombre, email y password son obligatorios' });
+    const {
+      nombre,
+      email,
+      password,
+      role = 'empleado',
+      horas_jornada,
+      hora_entrada,
+      hora_salida,
+      horas_semanales,
+      supervisor_id,
+      pin,
+    } = req.body;
+
+    if (!nombre || !email || !password) {
+      return res.status(400).json({ error: 'nombre, email y password son obligatorios' });
+    }
 
     const clean = {
       nombre: String(nombre).trim(),
@@ -85,14 +125,34 @@ router.post('/', requireAdmin, (req, res, next) => {
     };
 
     const info = db.prepare(`
-      INSERT INTO empleados (nombre, email, password_hash, role, supervisor_id, pin_hash, horas_jornada, hora_entrada, hora_salida, horas_semanales)
+      INSERT INTO empleados (
+        nombre, email, password_hash, role, supervisor_id, pin_hash,
+        horas_jornada, hora_entrada, hora_salida, horas_semanales
+      )
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(clean.nombre, clean.email, clean.password_hash, clean.role, clean.supervisor_id, clean.pin_hash, clean.horas_jornada, clean.hora_entrada, clean.hora_salida, clean.horas_semanales);
+    `).run(
+      clean.nombre,
+      clean.email,
+      clean.password_hash,
+      clean.role,
+      clean.supervisor_id,
+      clean.pin_hash,
+      clean.horas_jornada,
+      clean.hora_entrada,
+      clean.hora_salida,
+      clean.horas_semanales,
+    );
 
-    logAudit(req.usuario.id, 'created', 'empleados', info.lastInsertRowid, { email: clean.email, role: clean.role });
+    logAudit(req.usuario.id, 'created', 'empleados', info.lastInsertRowid, {
+      email: clean.email,
+      role: clean.role,
+    });
+
     res.status(201).json(publicEmpleado(getEmpleadoById(info.lastInsertRowid)));
   } catch (err) {
-    if (String(err.message).includes('UNIQUE')) return res.status(409).json({ error: 'Ya existe un empleado con ese email' });
+    if (String(err.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'Ya existe un empleado con ese email' });
+    }
     next(err);
   }
 });
@@ -101,12 +161,16 @@ router.put('/:id', requireAdmin, (req, res, next) => {
   try {
     const id = Number(req.params.id);
     const current = getEmpleadoById(id);
+
     if (!current) return res.status(404).json({ error: 'Empleado no encontrado' });
 
     const nombre = String(req.body.nombre || current.nombre).trim();
     const email = String(req.body.email || current.email).trim();
     const role = cleanRole(req.body.role, current.role);
-    const supervisor_id = req.body.supervisor_id === undefined ? (current.supervisor_id || null) : cleanSupervisor(req.body.supervisor_id);
+    const supervisor_id =
+      req.body.supervisor_id === undefined
+        ? (current.supervisor_id || null)
+        : cleanSupervisor(req.body.supervisor_id);
     const activo = req.body.activo === undefined ? current.activo : (req.body.activo ? 1 : 0);
     const jornada = toNumberOrDefault(req.body.horas_jornada, current.horas_jornada || 8);
     const semanales = toNumberOrDefault(req.body.horas_semanales, current.horas_semanales || 40);
@@ -114,7 +178,9 @@ router.put('/:id', requireAdmin, (req, res, next) => {
     const salida = cleanTime(req.body.hora_salida, current.hora_salida || '17:00');
 
     let passwordHash = current.password_hash;
-    if (req.body.password && String(req.body.password).trim()) passwordHash = bcrypt.hashSync(String(req.body.password), 10);
+    if (req.body.password && String(req.body.password).trim()) {
+      passwordHash = bcrypt.hashSync(String(req.body.password), 10);
+    }
 
     let pinHash = current.pin_hash;
     if (req.body.pin !== undefined) {
@@ -123,15 +189,46 @@ router.put('/:id', requireAdmin, (req, res, next) => {
 
     db.prepare(`
       UPDATE empleados
-      SET nombre = ?, email = ?, password_hash = ?, role = ?, supervisor_id = ?, pin_hash = ?, activo = ?,
-          horas_jornada = ?, hora_entrada = ?, hora_salida = ?, horas_semanales = ?, updated_at = CURRENT_TIMESTAMP
+      SET nombre = ?,
+          email = ?,
+          password_hash = ?,
+          role = ?,
+          supervisor_id = ?,
+          pin_hash = ?,
+          activo = ?,
+          horas_jornada = ?,
+          hora_entrada = ?,
+          hora_salida = ?,
+          horas_semanales = ?,
+          updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(nombre, email, passwordHash, role, supervisor_id, pinHash, activo, jornada, entrada, salida, semanales, id);
+    `).run(
+      nombre,
+      email,
+      passwordHash,
+      role,
+      supervisor_id,
+      pinHash,
+      activo,
+      jornada,
+      entrada,
+      salida,
+      semanales,
+      id,
+    );
 
-    logAudit(req.usuario.id, 'updated', 'empleados', id, { email, role, supervisor_id, activo });
+    logAudit(req.usuario.id, 'updated', 'empleados', id, {
+      email,
+      role,
+      supervisor_id,
+      activo,
+    });
+
     res.json(publicEmpleado(getEmpleadoById(id)));
   } catch (err) {
-    if (String(err.message).includes('UNIQUE')) return res.status(409).json({ error: 'Ya existe un empleado con ese email' });
+    if (String(err.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'Ya existe un empleado con ese email' });
+    }
     next(err);
   }
 });
@@ -139,12 +236,76 @@ router.put('/:id', requireAdmin, (req, res, next) => {
 router.delete('/:id', requireAdmin, (req, res, next) => {
   try {
     const id = Number(req.params.id);
-    if (id === req.usuario.id) return res.status(400).json({ error: 'No puedes eliminar tu propio usuario administrador mientras estas conectado' });
-    const info = db.prepare('DELETE FROM empleados WHERE id = ?').run(id);
-    if (!info.changes) return res.status(404).json({ error: 'Empleado no encontrado' });
-    logAudit(req.usuario.id, 'deleted', 'empleados', id);
-    res.json({ ok: true });
-  } catch (err) { next(err); }
+
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ error: 'ID de empleado no válido' });
+    }
+
+    if (Number(req.usuario?.id) === id) {
+      return res.status(400).json({ error: 'No puedes eliminar tu propio usuario mientras estás conectado' });
+    }
+
+    const empleado = db.prepare(`
+      SELECT id, nombre, email, role, activo
+      FROM empleados
+      WHERE id = ?
+    `).get(id);
+
+    if (!empleado) {
+      return res.status(404).json({ error: 'Empleado no encontrado' });
+    }
+
+    if (empleado.activo === 0) {
+      return res.json({
+        ok: true,
+        id,
+        message: 'Empleado ya estaba desactivado',
+      });
+    }
+
+    const adminsActivos = db.prepare(`
+      SELECT COUNT(*) AS total
+      FROM empleados
+      WHERE activo = 1
+        AND role = 'admin'
+    `).get().total;
+
+    if (empleado.role === 'admin' && adminsActivos <= 1) {
+      return res.status(400).json({ error: 'No puedes eliminar el último administrador activo' });
+    }
+
+    const desactivarEmpleado = db.transaction((empleadoId) => {
+      db.prepare(`
+        UPDATE empleados
+        SET supervisor_id = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE supervisor_id = ?
+      `).run(empleadoId);
+
+      db.prepare(`
+        UPDATE empleados
+        SET activo = 0,
+            supervisor_id = NULL,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `).run(empleadoId);
+    });
+
+    desactivarEmpleado(id);
+
+    logAudit(req.usuario.id, 'deactivated', 'empleados', id, {
+      email: empleado.email,
+      role: empleado.role,
+    });
+
+    res.json({
+      ok: true,
+      id,
+      message: 'Empleado desactivado correctamente',
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 module.exports = router;
