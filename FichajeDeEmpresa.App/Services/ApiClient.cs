@@ -48,16 +48,6 @@ public class ApiClient
         return await PostFichajeAsync("api/fichajes/entrada", request);
     }
 
-    public async Task<FichajeOperationResponseDto> RegisterPauseAsync(RegisterFichajeRequestDto request)
-    {
-        return await PostFichajeAsync("api/fichajes/pausa", request);
-    }
-
-    public async Task<FichajeOperationResponseDto> RegisterResumeAsync(RegisterFichajeRequestDto request)
-    {
-        return await PostFichajeAsync("api/fichajes/reanudar", request);
-    }
-
     public async Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request)
     {
         return await PostFichajeAsync("api/fichajes/salida", request);

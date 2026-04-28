@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FichajeDeEmpresa.Api.Services;
 
-public class InMemoryFichajeService : IFichajeService
+public class EfFichajeService : IFichajeService
 {
     private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-    public InMemoryFichajeService(IDbContextFactory<AppDbContext> dbContextFactory)
+    public EfFichajeService(IDbContextFactory<AppDbContext> dbContextFactory)
     {
         _dbContextFactory = dbContextFactory;
     }

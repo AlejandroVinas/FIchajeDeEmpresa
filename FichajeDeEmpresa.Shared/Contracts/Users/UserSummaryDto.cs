@@ -13,4 +13,6 @@ public class UserSummaryDto
     public decimal ExpectedDailyHours { get; set; }
 
     public bool IsActive { get; set; }
+
+    public string StatusText => IsActive ? "Activo" : "Inactivo";
 }

@@ -82,20 +82,6 @@ public partial class MainWindow : Window
         await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Entry);
     }
 
-    private async void PauseResumeButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (_currentSummary.IsPaused)
-        {
-            await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Resume);
-            return;
-        }
-
-        if (_currentSummary.IsWorking)
-        {
-            await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Pause);
-        }
-    }
-
     private async void ExitButton_Click(object sender, RoutedEventArgs e)
     {
         await RegisterFichajeWithOptionalCommentAsync(UserFichajeAction.Exit);
@@ -171,14 +157,7 @@ public partial class MainWindow : Window
 
     private async Task RegisterFichajeWithOptionalCommentAsync(UserFichajeAction action)
     {
-        var actionName = action switch
-        {
-            UserFichajeAction.Entry => "entrada",
-            UserFichajeAction.Pause => "pausa",
-            UserFichajeAction.Resume => "reanudar",
-            UserFichajeAction.Exit => "salida",
-            _ => "movimiento"
-        };
+        var actionName = action == UserFichajeAction.Entry ? "entrada" : "salida";
 
         var dialog = new FichajeCommentWindow(actionName)
         {
@@ -209,8 +188,6 @@ public partial class MainWindow : Window
         FichajeOperationResponseDto result = action switch
         {
             UserFichajeAction.Entry => await _apiClient.RegisterEntryAsync(request),
-            UserFichajeAction.Pause => await _apiClient.RegisterPauseAsync(request),
-            UserFichajeAction.Resume => await _apiClient.RegisterResumeAsync(request),
             UserFichajeAction.Exit => await _apiClient.RegisterExitAsync(request),
             _ => new FichajeOperationResponseDto
             {
@@ -247,7 +224,7 @@ public partial class MainWindow : Window
         UpdateCurrentSituation(summary);
         UpdateLiveMetrics();
 
-        MovementsListBox.ItemsSource = BuildMovementLines(summary);
+        MovementsListBox.ItemsSource = BuildMovementItems(summary);
 
         UpdateButtons();
     }
@@ -297,7 +274,7 @@ public partial class MainWindow : Window
 
         if (summary.IsPaused)
         {
-            CurrentSituationTextBlock.Text = "Tu jornada está en pausa.";
+            CurrentSituationTextBlock.Text = "Hay una pausa antigua registrada en esta jornada.";
             return;
         }
 
@@ -336,31 +313,70 @@ public partial class MainWindow : Window
         StatusBadgeBorder.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
     }
 
-    private List<string> BuildMovementLines(DaySummaryDto summary)
+    private List<TodayMovementDisplayItem> BuildMovementItems(DaySummaryDto summary)
     {
         if (summary.Movements.Count == 0)
         {
             return
             [
-                "Aún no has registrado movimientos hoy."
+                new TodayMovementDisplayItem
+                {
+                    TimeText = "--:--:--",
+                    TypeText = "Sin movimientos",
+                    CommentText = "Aún no has registrado movimientos hoy.",
+                    CommentVisibility = Visibility.Visible,
+                    BackgroundBrush = GetBrush("SoftCardBackgroundBrush", "#FBF7EE"),
+                    BorderBrush = GetBrush("BorderBrushSoft", "#E7DDC8"),
+                    TypeBrush = GetBrush("TextSecondaryBrush", "#6E624E")
+                }
             ];
         }
 
         return summary.Movements
-            .Select(BuildMovementLine)
+            .OrderByDescending(m => m.Timestamp)
+            .Select(BuildMovementItem)
             .ToList();
     }
 
-    private static string BuildMovementLine(FichajeMovementDto movement)
+    private TodayMovementDisplayItem BuildMovementItem(FichajeMovementDto movement)
     {
-        var baseText = $"{movement.Timestamp:HH:mm:ss} · {movement.Type}";
-
-        if (string.IsNullOrWhiteSpace(movement.Comment))
+        var item = new TodayMovementDisplayItem
         {
-            return baseText;
+            TimeText = movement.Timestamp.ToString("HH:mm:ss"),
+            TypeText = movement.Type,
+            CommentText = string.IsNullOrWhiteSpace(movement.Comment) ? string.Empty : $"Comentario: {movement.Comment}",
+            CommentVisibility = string.IsNullOrWhiteSpace(movement.Comment) ? Visibility.Collapsed : Visibility.Visible
+        };
+
+        switch ((movement.Type ?? string.Empty).Trim().ToLowerInvariant())
+        {
+            case "entrada":
+                item.BackgroundBrush = GetBrush("SuccessBackgroundBrush", "#EAF7EE");
+                item.BorderBrush = GetBrush("SuccessBorderBrush", "#B8DDBF");
+                item.TypeBrush = GetBrush("SuccessBrush", "#2F7D4A");
+                break;
+
+            case "salida":
+                item.BackgroundBrush = GetBrush("DangerBackgroundBrush", "#FDECEC");
+                item.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
+                item.TypeBrush = GetBrush("DangerBrush", "#A33A3A");
+                break;
+
+            case "pausa":
+            case "reanudar":
+                item.BackgroundBrush = GetBrush("WarningBackgroundBrush", "#FFF4D9");
+                item.BorderBrush = GetBrush("WarningBorderBrush", "#E9C66B");
+                item.TypeBrush = GetBrush("WarningBrush", "#A56A00");
+                break;
+
+            default:
+                item.BackgroundBrush = GetBrush("InfoBackgroundBrush", "#FFF8E1");
+                item.BorderBrush = GetBrush("InfoBorderBrush", "#E8D089");
+                item.TypeBrush = GetBrush("InfoBrush", "#7B5B12");
+                break;
         }
 
-        return $"{baseText}\nComentario: {movement.Comment}";
+        return item;
     }
 
     private void SetBusyState(bool isBusy)
@@ -375,10 +391,7 @@ public partial class MainWindow : Window
         var isOutside = !_currentSummary.IsWorking && !_currentSummary.IsPaused;
 
         EntryButton.IsEnabled = !_isBusy && isOutside;
-        PauseResumeButton.IsEnabled = !_isBusy && (_currentSummary.IsWorking || _currentSummary.IsPaused);
         ExitButton.IsEnabled = !_isBusy && (_currentSummary.IsWorking || _currentSummary.IsPaused);
-
-        PauseResumeButton.Content = _currentSummary.IsPaused ? "Reanudar" : "Pausar";
     }
 
     private void ShowMessage(string message, MessageTone tone)
@@ -436,9 +449,7 @@ public partial class MainWindow : Window
         return action switch
         {
             UserFichajeAction.Entry => "Has iniciado tu jornada correctamente.",
-            UserFichajeAction.Pause => "Has pausado tu jornada.",
-            UserFichajeAction.Resume => "Has reanudado tu jornada.",
-            UserFichajeAction.Exit => "Has finalizado tu jornada correctamente.",
+            UserFichajeAction.Exit => "Has finalizado este tramo correctamente.",
             _ => "Acción realizada correctamente."
         };
     }
@@ -447,9 +458,7 @@ public partial class MainWindow : Window
     {
         return action switch
         {
-            UserFichajeAction.Pause => MessageTone.Warning,
             UserFichajeAction.Entry => MessageTone.Success,
-            UserFichajeAction.Resume => MessageTone.Success,
             UserFichajeAction.Exit => MessageTone.Success,
             _ => MessageTone.Info
         };
@@ -481,8 +490,6 @@ public partial class MainWindow : Window
     private enum UserFichajeAction
     {
         Entry,
-        Pause,
-        Resume,
         Exit
     }
 
@@ -493,4 +500,21 @@ public partial class MainWindow : Window
         Warning,
         Error
     }
+}
+
+public sealed class TodayMovementDisplayItem
+{
+    public string TimeText { get; set; } = string.Empty;
+
+    public string TypeText { get; set; } = string.Empty;
+
+    public string CommentText { get; set; } = string.Empty;
+
+    public Visibility CommentVisibility { get; set; } = Visibility.Collapsed;
+
+    public Brush BackgroundBrush { get; set; } = Brushes.Transparent;
+
+    public Brush BorderBrush { get; set; } = Brushes.Transparent;
+
+    public Brush TypeBrush { get; set; } = Brushes.Black;
 }

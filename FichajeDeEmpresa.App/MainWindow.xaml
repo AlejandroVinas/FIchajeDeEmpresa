@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="HIFLUNECAN S.L. - Control de fichaje"
+        Icon="pack://application:,,,/Assets/Icons/app-icon.ico"
         Height="720"
         Width="1240"
         MinHeight="640"
@@ -23,7 +24,6 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- CABECERA -->
         <Border Grid.Row="0"
                 Style="{StaticResource AppCardBorderStyle}"
                 Padding="22">
@@ -112,7 +112,6 @@
             </Grid>
         </Border>
 
-        <!-- CUERPO -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.45*" />
@@ -120,7 +119,6 @@
                 <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
 
-            <!-- COLUMNA IZQUIERDA -->
             <Grid Grid.Column="0">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -130,7 +128,6 @@
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- RESUMEN -->
                 <Border Grid.Row="0"
                         Style="{StaticResource AppCardBorderStyle}">
                     <Grid>
@@ -222,7 +219,6 @@
                     </Grid>
                 </Border>
 
-                <!-- ACCIONES -->
                 <Border Grid.Row="2"
                         Style="{StaticResource AppCardBorderStyle}">
                     <Grid>
@@ -238,7 +234,7 @@
                             <TextBlock Text="Acciones rápidas"
                                        Style="{StaticResource AppSectionTitleStyle}" />
                             <TextBlock Margin="0,6,0,0"
-                                       Text="Registra entrada, pausa, reanudación o salida."
+                                       Text="Registra los tramos de tu jornada con entrada y salida."
                                        FontSize="13"
                                        Foreground="{StaticResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -249,12 +245,6 @@
                                     Content="Fichar entrada"
                                     Style="{StaticResource AppSuccessButtonStyle}"
                                     Click="EntryButton_Click" />
-
-                            <Button x:Name="PauseResumeButton"
-                                    Margin="0,0,10,10"
-                                    Content="Pausar"
-                                    Style="{StaticResource AppWarningButtonStyle}"
-                                    Click="PauseResumeButton_Click" />
 
                             <Button x:Name="ExitButton"
                                     Margin="0,0,10,10"
@@ -276,7 +266,6 @@
                     </Grid>
                 </Border>
 
-                <!-- MENSAJES -->
                 <Border Grid.Row="4"
                         x:Name="MessageBorder"
                         Style="{StaticResource AppCardBorderStyle}"
@@ -293,7 +282,6 @@
                 </Border>
             </Grid>
 
-            <!-- COLUMNA DERECHA -->
             <Border Grid.Column="2"
                     Style="{StaticResource AppCardBorderStyle}">
                 <Grid>
@@ -323,15 +311,28 @@
                             <DataTemplate>
                                 <Border Margin="0,0,0,8"
                                         Padding="12"
-                                        Background="{StaticResource SoftCardBackgroundBrush}"
-                                        BorderBrush="{StaticResource BorderBrushSoft}"
+                                        Background="{Binding BackgroundBrush}"
+                                        BorderBrush="{Binding BorderBrush}"
                                         BorderThickness="1"
-                                        CornerRadius="12">
-                                    <TextBlock Text="{Binding}"
-                                               FontSize="14"
-                                               FontWeight="SemiBold"
-                                               Foreground="{StaticResource TextPrimaryBrush}"
-                                               TextWrapping="Wrap" />
+                                        CornerRadius="12"
+                                        HorizontalAlignment="Left">
+                                    <StackPanel>
+                                        <TextBlock FontSize="14"
+                                                   FontWeight="Bold"
+                                                   Foreground="{StaticResource TextPrimaryBrush}">
+                                            <Run Text="{Binding TimeText}" />
+                                            <Run Text=" · " />
+                                            <Run Text="{Binding TypeText}"
+                                                 Foreground="{Binding TypeBrush}" />
+                                        </TextBlock>
+
+                                        <TextBlock Margin="0,6,0,0"
+                                                   FontSize="12"
+                                                   Foreground="{Binding TypeBrush}"
+                                                   TextWrapping="Wrap"
+                                                   Visibility="{Binding CommentVisibility}"
+                                                   Text="{Binding CommentText}" />
+                                    </StackPanel>
                                 </Border>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

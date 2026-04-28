@@ -6,10 +6,6 @@ public interface IFichajeService
 {
     Task<FichajeOperationResponseDto> RegisterEntryAsync(RegisterFichajeRequestDto request);
 
-    Task<FichajeOperationResponseDto> RegisterPauseAsync(RegisterFichajeRequestDto request);
-
-    Task<FichajeOperationResponseDto> RegisterResumeAsync(RegisterFichajeRequestDto request);
-
     Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request);
 
     Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId);

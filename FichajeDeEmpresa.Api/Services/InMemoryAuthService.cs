@@ -1,369 +1,359 @@
-using FichajeDeEmpresa.Shared.Contracts.Auth;
-using FichajeDeEmpresa.Shared.Contracts.Users;
+using FichajeDeEmpresa.Api.Data;
+using FichajeDeEmpresa.Api.Data.Entities;
+using FichajeDeEmpresa.Shared.Contracts.Fichajes;
+using Microsoft.EntityFrameworkCore;
 
 namespace FichajeDeEmpresa.Api.Services;
 
-public class InMemoryAuthService : IAuthService
+public class InMemoryFichajeService : IFichajeService
 {
-    private readonly object _lock = new();
-    private readonly List<UserRecord> _users =
-    [
-        new UserRecord(1, "Administrador", "admin", "admin", "Admin", 8m, true),
-        new UserRecord(2, "Usuario", "user", "user", "User", 8m, true)
-    ];
+    private readonly IDbContextFactory<AppDbContext> _dbContextFactory;
 
-    private int _nextUserId = 3;
-
-    public Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
+    public InMemoryFichajeService(IDbContextFactory<AppDbContext> dbContextFactory)
     {
-        if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))
+        _dbContextFactory = dbContextFactory;
+    }
+
+    public Task<FichajeOperationResponseDto> RegisterEntryAsync(RegisterFichajeRequestDto request)
+    {
+        return RegisterMovementAsync(
+            request,
+            "Entrada",
+            state => state == WorkingState.Outside,
+            "No puedes fichar entrada porque ya tienes un tramo abierto.");
+    }
+
+    public Task<FichajeOperationResponseDto> RegisterExitAsync(RegisterFichajeRequestDto request)
+    {
+        return RegisterMovementAsync(
+            request,
+            "Salida",
+            state => state == WorkingState.Working || state == WorkingState.Paused,
+            "No puedes fichar salida porque no hay un tramo activo.");
+    }
+
+    public async Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId)
+    {
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user is null)
         {
-            return Task.FromResult(new LoginResponseDto
+            return new FichajeOperationResponseDto
             {
                 IsSuccess = false,
-                Message = "Debes introducir usuario y contraseña."
-            });
+                Message = "No se ha encontrado el usuario."
+            };
         }
 
-        lock (_lock)
+        var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+
+        var records = await dbContext.FichajeRecords
+            .AsNoTracking()
+            .Where(f => f.UserId == userId && f.Timestamp >= today && f.Timestamp < tomorrow)
+            .OrderBy(f => f.Timestamp)
+            .ToListAsync();
+
+        var summary = BuildDaySummary(records, user.ExpectedDailyHours, DateTime.Now);
+
+        return new FichajeOperationResponseDto
         {
-            var user = _users.FirstOrDefault(u =>
-                string.Equals(u.UserName, request.UserName.Trim(), StringComparison.OrdinalIgnoreCase) &&
-                u.Password == request.Password);
-
-            if (user is null)
-            {
-                return Task.FromResult(new LoginResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "Usuario o contraseña incorrectos."
-                });
-            }
-
-            if (!user.IsActive)
-            {
-                return Task.FromResult(new LoginResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "Este usuario está desactivado y no puede iniciar sesión."
-                });
-            }
-
-            return Task.FromResult(new LoginResponseDto
-            {
-                IsSuccess = true,
-                Message = "Inicio de sesión correcto.",
-                UserId = user.UserId,
-                UserName = user.UserName,
-                FullName = user.FullName,
-                Role = user.Role,
-                ExpectedDailyHours = user.ExpectedDailyHours
-            });
-        }
-    }
-
-    public Task<UserListResponseDto> GetAllUsersAsync()
-    {
-        lock (_lock)
-        {
-            return Task.FromResult(new UserListResponseDto
-            {
-                IsSuccess = true,
-                Message = "Usuarios obtenidos correctamente.",
-                Users = _users
-                    .OrderBy(u => u.FullName)
-                    .Select(MapUser)
-                    .ToList()
-            });
-        }
-    }
-
-    public Task<UserOperationResponseDto> CreateUserAsync(CreateUserRequestDto request)
-    {
-        var validationMessage = ValidateCreateRequest(request);
-        if (!string.IsNullOrWhiteSpace(validationMessage))
-        {
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = validationMessage
-            });
-        }
-
-        lock (_lock)
-        {
-            if (_users.Any(u => string.Equals(u.UserName, request.UserName.Trim(), StringComparison.OrdinalIgnoreCase)))
-            {
-                return Task.FromResult(new UserOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "Ya existe un usuario con ese nombre de usuario."
-                });
-            }
-
-            var user = new UserRecord(
-                _nextUserId++,
-                request.FullName.Trim(),
-                request.UserName.Trim(),
-                request.Password,
-                NormalizeRole(request.Role),
-                request.ExpectedDailyHours,
-                true);
-
-            _users.Add(user);
-
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = true,
-                Message = "Usuario creado correctamente.",
-                User = MapUser(user)
-            });
-        }
-    }
-
-    public Task<UserOperationResponseDto> UpdateUserAsync(int userId, UpdateUserRequestDto request)
-    {
-        var validationMessage = ValidateUpdateRequest(request);
-        if (!string.IsNullOrWhiteSpace(validationMessage))
-        {
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = false,
-                Message = validationMessage
-            });
-        }
-
-        lock (_lock)
-        {
-            var index = _users.FindIndex(u => u.UserId == userId);
-
-            if (index < 0)
-            {
-                return Task.FromResult(new UserOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "No se ha encontrado el usuario."
-                });
-            }
-
-            if (_users.Any(u =>
-                    u.UserId != userId &&
-                    string.Equals(u.UserName, request.UserName.Trim(), StringComparison.OrdinalIgnoreCase)))
-            {
-                return Task.FromResult(new UserOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "Ya existe otro usuario con ese nombre de usuario."
-                });
-            }
-
-            var current = _users[index];
-            var updatedPassword = string.IsNullOrWhiteSpace(request.Password)
-                ? current.Password
-                : request.Password;
-
-            var updated = new UserRecord(
-                current.UserId,
-                request.FullName.Trim(),
-                request.UserName.Trim(),
-                updatedPassword,
-                NormalizeRole(request.Role),
-                request.ExpectedDailyHours,
-                current.IsActive);
-
-            _users[index] = updated;
-
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = true,
-                Message = "Usuario actualizado correctamente.",
-                User = MapUser(updated)
-            });
-        }
-    }
-
-    public Task<UserOperationResponseDto> SetUserActiveAsync(int userId, bool isActive)
-    {
-        lock (_lock)
-        {
-            var index = _users.FindIndex(u => u.UserId == userId);
-
-            if (index < 0)
-            {
-                return Task.FromResult(new UserOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "No se ha encontrado el usuario."
-                });
-            }
-
-            var current = _users[index];
-
-            if (current.IsActive == isActive)
-            {
-                return Task.FromResult(new UserOperationResponseDto
-                {
-                    IsSuccess = true,
-                    Message = isActive ? "El usuario ya estaba activo." : "El usuario ya estaba desactivado.",
-                    User = MapUser(current)
-                });
-            }
-
-            if (!isActive && string.Equals(current.Role, "Admin", StringComparison.OrdinalIgnoreCase))
-            {
-                var activeAdmins = _users.Count(u => u.IsActive && string.Equals(u.Role, "Admin", StringComparison.OrdinalIgnoreCase));
-
-                if (activeAdmins <= 1)
-                {
-                    return Task.FromResult(new UserOperationResponseDto
-                    {
-                        IsSuccess = false,
-                        Message = "No puedes desactivar al último administrador activo."
-                    });
-                }
-            }
-
-            var updated = current with { IsActive = isActive };
-            _users[index] = updated;
-
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = true,
-                Message = isActive ? "Usuario reactivado correctamente." : "Usuario desactivado correctamente.",
-                User = MapUser(updated)
-            });
-        }
-    }
-
-    public Task<UserOperationResponseDto> DeleteUserAsync(int userId)
-    {
-        lock (_lock)
-        {
-            var user = _users.FirstOrDefault(u => u.UserId == userId);
-
-            if (user is null)
-            {
-                return Task.FromResult(new UserOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "No se ha encontrado el usuario."
-                });
-            }
-
-            if (user.IsActive && string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
-            {
-                var activeAdmins = _users.Count(u => u.IsActive && string.Equals(u.Role, "Admin", StringComparison.OrdinalIgnoreCase));
-
-                if (activeAdmins <= 1)
-                {
-                    return Task.FromResult(new UserOperationResponseDto
-                    {
-                        IsSuccess = false,
-                        Message = "No puedes borrar al último administrador activo."
-                    });
-                }
-            }
-
-            _users.Remove(user);
-
-            return Task.FromResult(new UserOperationResponseDto
-            {
-                IsSuccess = true,
-                Message = "Usuario borrado correctamente."
-            });
-        }
-    }
-
-    public Task<UserSummaryDto?> GetUserByIdAsync(int userId)
-    {
-        lock (_lock)
-        {
-            var user = _users.FirstOrDefault(u => u.UserId == userId);
-            return Task.FromResult(user is null ? null : MapUser(user));
-        }
-    }
-
-    private static string? ValidateCreateRequest(CreateUserRequestDto request)
-    {
-        if (string.IsNullOrWhiteSpace(request.FullName))
-        {
-            return "Debes indicar el nombre completo.";
-        }
-
-        if (string.IsNullOrWhiteSpace(request.UserName))
-        {
-            return "Debes indicar el nombre de usuario.";
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Password))
-        {
-            return "Debes indicar la contraseña.";
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Role))
-        {
-            return "Debes indicar el rol.";
-        }
-
-        if (request.ExpectedDailyHours <= 0)
-        {
-            return "Las horas diarias deben ser mayores que cero.";
-        }
-
-        return null;
-    }
-
-    private static string? ValidateUpdateRequest(UpdateUserRequestDto request)
-    {
-        if (string.IsNullOrWhiteSpace(request.FullName))
-        {
-            return "Debes indicar el nombre completo.";
-        }
-
-        if (string.IsNullOrWhiteSpace(request.UserName))
-        {
-            return "Debes indicar el nombre de usuario.";
-        }
-
-        if (string.IsNullOrWhiteSpace(request.Role))
-        {
-            return "Debes indicar el rol.";
-        }
-
-        if (request.ExpectedDailyHours <= 0)
-        {
-            return "Las horas diarias deben ser mayores que cero.";
-        }
-
-        return null;
-    }
-
-    private static string NormalizeRole(string role)
-    {
-        return string.Equals(role?.Trim(), "Admin", StringComparison.OrdinalIgnoreCase)
-            ? "Admin"
-            : "User";
-    }
-
-    private static UserSummaryDto MapUser(UserRecord user)
-    {
-        return new UserSummaryDto
-        {
-            UserId = user.UserId,
-            FullName = user.FullName,
-            UserName = user.UserName,
-            Role = user.Role,
-            ExpectedDailyHours = user.ExpectedDailyHours,
-            IsActive = user.IsActive
+            IsSuccess = true,
+            Message = "Resumen obtenido correctamente.",
+            Summary = summary
         };
     }
 
-    private sealed record UserRecord(
-        int UserId,
-        string FullName,
-        string UserName,
-        string Password,
-        string Role,
-        decimal ExpectedDailyHours,
-        bool IsActive);
+    public async Task<AdminFichajeHistoryResponseDto> GetHistoryAsync(int? userId, DateTime fromDate, DateTime toDate)
+    {
+        var from = fromDate.Date;
+        var to = toDate.Date;
+
+        if (from > to)
+        {
+            return new AdminFichajeHistoryResponseDto
+            {
+                IsSuccess = false,
+                Message = "La fecha desde no puede ser mayor que la fecha hasta."
+            };
+        }
+
+        var toExclusive = to.AddDays(1);
+
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        var query = dbContext.FichajeRecords
+            .AsNoTracking()
+            .Include(f => f.User)
+            .Where(f => f.Timestamp >= from && f.Timestamp < toExclusive);
+
+        if (userId.HasValue)
+        {
+            query = query.Where(f => f.UserId == userId.Value);
+        }
+
+        var records = await query
+            .OrderBy(f => f.Timestamp)
+            .ToListAsync();
+
+        var days = records
+            .GroupBy(f => new
+            {
+                f.UserId,
+                Date = f.Timestamp.Date
+            })
+            .OrderByDescending(g => g.Key.Date)
+            .ThenBy(g => g.First().User?.FullName)
+            .Select(group =>
+            {
+                var user = group.First().User!;
+                var endReference = group.Key.Date == DateTime.Today ? DateTime.Now : group.Key.Date.AddDays(1);
+                var daySummary = BuildDaySummary(group.OrderBy(x => x.Timestamp).ToList(), user.ExpectedDailyHours, endReference);
+
+                return new AdminFichajeHistoryDayDto
+                {
+                    Date = group.Key.Date,
+                    UserId = user.Id,
+                    FullName = user.FullName,
+                    UserName = user.UserName,
+                    WorkedSeconds = daySummary.WorkedSecondsToday,
+                    ExtraSeconds = daySummary.ExtraSecondsToday,
+                    IsWorking = daySummary.IsWorking,
+                    IsPaused = daySummary.IsPaused,
+                    Movements = daySummary.Movements
+                };
+            })
+            .ToList();
+
+        return new AdminFichajeHistoryResponseDto
+        {
+            IsSuccess = true,
+            Message = "Historial obtenido correctamente.",
+            Days = days
+        };
+    }
+
+    private async Task<FichajeOperationResponseDto> RegisterMovementAsync(
+        RegisterFichajeRequestDto request,
+        string movementType,
+        Func<WorkingState, bool> allowedState,
+        string invalidStateMessage)
+    {
+        if (request.UserId <= 0)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "El usuario indicado no es válido."
+            };
+        }
+
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+        if (user is null)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "No se ha encontrado el usuario."
+            };
+        }
+
+        if (!user.IsActive)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "Este usuario está desactivado y no puede registrar fichajes."
+            };
+        }
+
+        var today = DateTime.Today;
+        var tomorrow = today.AddDays(1);
+
+        var records = await dbContext.FichajeRecords
+            .Where(f => f.UserId == request.UserId && f.Timestamp >= today && f.Timestamp < tomorrow)
+            .OrderBy(f => f.Timestamp)
+            .ToListAsync();
+
+        var currentSummary = BuildDaySummary(records, user.ExpectedDailyHours, DateTime.Now);
+        var currentState = GetWorkingState(currentSummary);
+
+        if (!allowedState(currentState))
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = invalidStateMessage,
+                Summary = currentSummary
+            };
+        }
+
+        var record = new FichajeRecordEntity
+        {
+            UserId = request.UserId,
+            Timestamp = DateTime.Now,
+            Type = movementType,
+            Comment = NormalizeComment(request.Comment)
+        };
+
+        dbContext.FichajeRecords.Add(record);
+        await dbContext.SaveChangesAsync();
+
+        records.Add(record);
+
+        var updatedSummary = BuildDaySummary(records, user.ExpectedDailyHours, DateTime.Now);
+
+        return new FichajeOperationResponseDto
+        {
+            IsSuccess = true,
+            Message = GetSuccessMessage(movementType),
+            Summary = updatedSummary
+        };
+    }
+
+    private static DaySummaryDto BuildDaySummary(
+        IReadOnlyCollection<FichajeRecordEntity> records,
+        decimal expectedDailyHours,
+        DateTime referenceTime)
+    {
+        var orderedRecords = records
+            .OrderBy(r => r.Timestamp)
+            .ToList();
+
+        var movements = orderedRecords
+            .Select(r => new FichajeMovementDto
+            {
+                Timestamp = r.Timestamp,
+                Type = r.Type,
+                Comment = r.Comment
+            })
+            .ToList();
+
+        var workedSeconds = 0;
+        DateTime? workingFrom = null;
+        var state = WorkingState.Outside;
+
+        foreach (var record in orderedRecords)
+        {
+            switch (NormalizeType(record.Type))
+            {
+                case "entrada":
+                    if (state == WorkingState.Outside)
+                    {
+                        workingFrom = record.Timestamp;
+                        state = WorkingState.Working;
+                    }
+                    break;
+
+                case "pausa":
+                    if (state == WorkingState.Working && workingFrom.HasValue)
+                    {
+                        workedSeconds += SafeSecondsBetween(workingFrom.Value, record.Timestamp);
+                        workingFrom = null;
+                        state = WorkingState.Paused;
+                    }
+                    break;
+
+                case "reanudar":
+                    if (state == WorkingState.Paused)
+                    {
+                        workingFrom = record.Timestamp;
+                        state = WorkingState.Working;
+                    }
+                    break;
+
+                case "salida":
+                    if (state == WorkingState.Working && workingFrom.HasValue)
+                    {
+                        workedSeconds += SafeSecondsBetween(workingFrom.Value, record.Timestamp);
+                        workingFrom = null;
+                    }
+
+                    state = WorkingState.Outside;
+                    break;
+            }
+        }
+
+        if (state == WorkingState.Working && workingFrom.HasValue)
+        {
+            workedSeconds += SafeSecondsBetween(workingFrom.Value, referenceTime);
+        }
+
+        var expectedSeconds = (int)Math.Round(expectedDailyHours * 3600m);
+        var normalSeconds = Math.Min(workedSeconds, expectedSeconds);
+        var extraSeconds = Math.Max(0, workedSeconds - expectedSeconds);
+
+        return new DaySummaryDto
+        {
+            IsWorking = state == WorkingState.Working,
+            IsPaused = state == WorkingState.Paused,
+            WorkedSecondsToday = workedSeconds,
+            NormalSecondsToday = normalSeconds,
+            ExtraSecondsToday = extraSeconds,
+            LastEntryTime = orderedRecords.LastOrDefault(r => NormalizeType(r.Type) == "entrada")?.Timestamp,
+            LastExitTime = orderedRecords.LastOrDefault(r => NormalizeType(r.Type) == "salida")?.Timestamp,
+            Movements = movements
+        };
+    }
+
+    private static WorkingState GetWorkingState(DaySummaryDto summary)
+    {
+        if (summary.IsWorking)
+        {
+            return WorkingState.Working;
+        }
+
+        if (summary.IsPaused)
+        {
+            return WorkingState.Paused;
+        }
+
+        return WorkingState.Outside;
+    }
+
+    private static int SafeSecondsBetween(DateTime from, DateTime to)
+    {
+        if (to <= from)
+        {
+            return 0;
+        }
+
+        return (int)Math.Floor((to - from).TotalSeconds);
+    }
+
+    private static string? NormalizeComment(string? comment)
+    {
+        return string.IsNullOrWhiteSpace(comment) ? null : comment.Trim();
+    }
+
+    private static string NormalizeType(string? type)
+    {
+        return (type ?? string.Empty).Trim().ToLowerInvariant();
+    }
+
+    private static string GetSuccessMessage(string movementType)
+    {
+        return movementType switch
+        {
+            "Entrada" => "Entrada registrada correctamente.",
+            "Salida" => "Salida registrada correctamente.",
+            _ => "Movimiento registrado correctamente."
+        };
+    }
+
+    private enum WorkingState
+    {
+        Outside,
+        Working,
+        Paused
+    }
 }

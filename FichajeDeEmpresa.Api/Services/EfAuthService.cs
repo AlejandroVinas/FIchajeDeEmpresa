@@ -266,29 +266,27 @@ public class EfAuthService : IAuthService
             };
         }
 
-        if (string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
-        {
-            var adminCount = await dbContext.Users.CountAsync(u => u.IsActive && u.Role == "Admin");
-
-            if (user.IsActive && adminCount <= 1)
-            {
-                return new UserOperationResponseDto
-                {
-                    IsSuccess = false,
-                    Message = "No puedes borrar al último administrador activo."
-                };
-            }
-        }
-
-        var hasFichajes = await dbContext.FichajeRecords.AnyAsync(f => f.UserId == userId);
-
-        if (hasFichajes)
+        if (user.IsActive)
         {
             return new UserOperationResponseDto
             {
                 IsSuccess = false,
-                Message = "Este usuario tiene fichajes guardados. Debes desactivarlo en lugar de borrarlo."
+                Message = "Debes desactivar el usuario antes del borrado definitivo."
             };
+        }
+
+        if (string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+        {
+            var totalAdmins = await dbContext.Users.CountAsync(u => u.Role == "Admin");
+
+            if (totalAdmins <= 1)
+            {
+                return new UserOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "No puedes borrar el último administrador del sistema."
+                };
+            }
         }
 
         dbContext.Users.Remove(user);
@@ -297,7 +295,7 @@ public class EfAuthService : IAuthService
         return new UserOperationResponseDto
         {
             IsSuccess = true,
-            Message = "Usuario borrado correctamente."
+            Message = "Usuario eliminado definitivamente junto con sus fichajes."
         };
     }
 

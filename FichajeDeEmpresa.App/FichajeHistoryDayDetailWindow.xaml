@@ -1,19 +1,18 @@
 <Window x:Class="FichajeDeEmpresa.App.FichajeHistoryDayDetailWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d"
         Title="Detalle del día"
-        Height="720"
-        Width="900"
-        MinHeight="680"
-        MinWidth="820"
+        Icon="pack://application:,,,/Assets/Icons/app-icon.ico"
+        Width="760"
+        Height="760"
+        MinWidth="680"
+        MinHeight="620"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Background="{StaticResource WindowBackgroundBrush}">
+       
 
-    <Grid Margin="18">
+    <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="14" />
@@ -22,46 +21,35 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
+        <!-- Cabecera -->
         <Border Grid.Row="0"
                 Style="{StaticResource AppCardBorderStyle}">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock x:Name="TitleTextBlock"
+                           FontSize="24"
+                           FontWeight="Bold"
+                           Foreground="{StaticResource TextPrimaryBrush}" />
 
-                <StackPanel Grid.Column="0">
-                    <TextBlock x:Name="HeaderTitleTextBlock"
-                               FontSize="24"
-                               FontWeight="Bold"
-                               Foreground="{StaticResource TextPrimaryBrush}" />
-
-                    <TextBlock x:Name="HeaderSubTitleTextBlock"
-                               Margin="0,8,0,0"
-                               FontSize="13"
-                               Foreground="{StaticResource TextSecondaryBrush}"
-                               TextWrapping="Wrap" />
-                </StackPanel>
-
-                <Button Grid.Column="1"
-                        Width="110"
-                        Content="Cerrar"
-                        Style="{StaticResource AppSecondaryButtonStyle}"
-                        Click="CloseButton_Click" />
-            </Grid>
+                <TextBlock x:Name="SubtitleTextBlock"
+                           Margin="0,10,0,0"
+                           FontSize="14"
+                           Foreground="{StaticResource TextSecondaryBrush}" />
+            </StackPanel>
         </Border>
 
-        <WrapPanel Grid.Row="2">
+        <!-- Resumen -->
+        <WrapPanel Grid.Row="2"
+                   ItemWidth="170"
+                   Orientation="Horizontal">
             <Border Style="{StaticResource AppSoftCardBorderStyle}"
                     Width="170"
-                    Height="96"
-                    Margin="0,0,12,0">
+                    Margin="0,0,12,12">
                 <StackPanel>
                     <TextBlock Text="Estado"
                                Style="{StaticResource AppFieldLabelStyle}" />
                     <TextBlock x:Name="StatusValueTextBlock"
                                Margin="0,10,0,0"
-                               FontSize="20"
+                               FontSize="18"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}" />
                 </StackPanel>
@@ -69,14 +57,13 @@
 
             <Border Style="{StaticResource AppSoftCardBorderStyle}"
                     Width="170"
-                    Height="96"
-                    Margin="0,0,12,0">
+                    Margin="0,0,12,12">
                 <StackPanel>
                     <TextBlock Text="Trabajado"
                                Style="{StaticResource AppFieldLabelStyle}" />
                     <TextBlock x:Name="WorkedValueTextBlock"
                                Margin="0,10,0,0"
-                               FontSize="20"
+                               FontSize="18"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}" />
                 </StackPanel>
@@ -84,14 +71,13 @@
 
             <Border Style="{StaticResource AppSoftCardBorderStyle}"
                     Width="170"
-                    Height="96"
-                    Margin="0,0,12,0">
+                    Margin="0,0,12,12">
                 <StackPanel>
                     <TextBlock Text="Normales"
                                Style="{StaticResource AppFieldLabelStyle}" />
                     <TextBlock x:Name="NormalValueTextBlock"
                                Margin="0,10,0,0"
-                               FontSize="20"
+                               FontSize="18"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}" />
                 </StackPanel>
@@ -99,19 +85,20 @@
 
             <Border Style="{StaticResource AppSoftCardBorderStyle}"
                     Width="170"
-                    Height="96">
+                    Margin="0,0,12,12">
                 <StackPanel>
                     <TextBlock Text="Extra"
                                Style="{StaticResource AppFieldLabelStyle}" />
                     <TextBlock x:Name="ExtraValueTextBlock"
                                Margin="0,10,0,0"
-                               FontSize="20"
+                               FontSize="18"
                                FontWeight="Bold"
                                Foreground="{StaticResource TextPrimaryBrush}" />
                 </StackPanel>
             </Border>
         </WrapPanel>
 
+        <!-- Movimientos -->
         <Border Grid.Row="4"
                 Style="{StaticResource AppCardBorderStyle}">
             <Grid>
@@ -123,31 +110,13 @@
 
                 <TextBlock Grid.Row="0"
                            Text="Movimientos"
-                           FontSize="20"
-                           FontWeight="Bold"
-                           Foreground="{StaticResource TextPrimaryBrush}" />
+                           Style="{StaticResource AppSectionTitleStyle}" />
 
-                <ListBox Grid.Row="2"
-                         x:Name="MovementsListBox"
-                         BorderThickness="0"
-                         Background="Transparent">
-                    <ListBox.ItemTemplate>
-                        <DataTemplate>
-                            <Border Margin="0,0,0,10"
-                                    Padding="14"
-                                    Background="{StaticResource SoftCardBackgroundBrush}"
-                                    BorderBrush="{StaticResource BorderBrushSoft}"
-                                    BorderThickness="1"
-                                    CornerRadius="12">
-                                <TextBlock Text="{Binding}"
-                                           FontSize="14"
-                                           FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimaryBrush}"
-                                           TextWrapping="Wrap" />
-                            </Border>
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
+                <ScrollViewer Grid.Row="2"
+                              VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel x:Name="MovementsPanel" />
+                </ScrollViewer>
             </Grid>
         </Border>
     </Grid>

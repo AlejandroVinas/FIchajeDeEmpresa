@@ -12,9 +12,7 @@ builder.Services.AddDbContextFactory<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddSingleton<IAuthService, EfAuthService>();
-
-// De momento fichajes siguen en memoria
-builder.Services.AddSingleton<IFichajeService, InMemoryFichajeService>();
+builder.Services.AddSingleton<IFichajeService, EfFichajeService>();
 
 var app = builder.Build();
 

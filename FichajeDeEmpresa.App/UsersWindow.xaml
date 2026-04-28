@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Usuarios del sistema"
+        Icon="pack://application:,,,/Assets/Icons/app-icon.ico"
         Height="720"
         Width="1080"
         MinHeight="640"
@@ -52,8 +53,8 @@
 
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="300" />
-                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="320" />
+                        <ColumnDefinition Width="18" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -68,36 +69,30 @@
                     <WrapPanel Grid.Column="2"
                                HorizontalAlignment="Right"
                                VerticalAlignment="Bottom">
-                        <Button x:Name="RefreshButton"
-                                Width="120"
-                                Margin="0,0,10,0"
-                                Content="Actualizar"
-                                Style="{StaticResource AppSecondaryButtonStyle}"
-                                Click="RefreshButton_Click" />
-
                         <Button x:Name="EditSelectedUserButton"
                                 Width="130"
-                                Margin="0,0,10,0"
+                                Margin="0,0,12,10"
                                 Content="Editar"
                                 Style="{StaticResource AppSecondaryButtonStyle}"
                                 Click="EditSelectedUserButton_Click" />
 
                         <Button x:Name="ToggleActiveUserButton"
                                 Width="150"
-                                Margin="0,0,10,0"
+                                Margin="0,0,12,10"
                                 Content="Desactivar"
                                 Style="{StaticResource AppSecondaryButtonStyle}"
                                 Click="ToggleActiveUserButton_Click" />
 
                         <Button x:Name="DeleteSelectedUserButton"
                                 Width="120"
-                                Margin="0,0,10,0"
+                                Margin="0,0,12,10"
                                 Content="Borrar"
                                 Style="{StaticResource AppDangerButtonStyle}"
                                 Click="DeleteSelectedUserButton_Click" />
 
                         <Button x:Name="OpenCreateUserButton"
                                 Width="150"
+                                Margin="0,0,0,10"
                                 Content="Crear usuario"
                                 Style="{StaticResource AppPrimaryButtonStyle}"
                                 Click="OpenCreateUserButton_Click" />
@@ -142,7 +137,7 @@
                                 <GridViewColumn Width="280" Header="Nombre completo" DisplayMemberBinding="{Binding FullName}" />
                                 <GridViewColumn Width="170" Header="Usuario" DisplayMemberBinding="{Binding UserName}" />
                                 <GridViewColumn Width="120" Header="Rol" DisplayMemberBinding="{Binding Role}" />
-                                <GridViewColumn Width="140" Header="Estado" DisplayMemberBinding="{Binding IsActive}" />
+                                <GridViewColumn Width="140" Header="Estado" DisplayMemberBinding="{Binding StatusText}" />
                                 <GridViewColumn Width="170" Header="Jornada objetivo" DisplayMemberBinding="{Binding ExpectedDailyHours}" />
                             </GridView>
                         </ListView.View>

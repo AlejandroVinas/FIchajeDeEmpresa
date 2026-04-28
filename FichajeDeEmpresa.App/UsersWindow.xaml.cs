@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using FichajeDeEmpresa.App.Dialogs;
 using FichajeDeEmpresa.App.Services;
 using FichajeDeEmpresa.Shared.Contracts.Users;
 
@@ -24,11 +25,6 @@ public partial class UsersWindow : Window
     {
         await LoadUsersAsync();
         UpdateActionButtons();
-    }
-
-    private async void RefreshButton_Click(object sender, RoutedEventArgs e)
-    {
-        await LoadUsersAsync();
     }
 
     private void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -126,13 +122,20 @@ public partial class UsersWindow : Window
             return;
         }
 
-        var result = MessageBox.Show(
-            $"¿Seguro que quieres borrar a '{selectedUser.FullName}'?\n\nEsta acción solo debería usarse para usuarios creados por error o sin historial.",
-            "Borrar usuario",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
+        if (selectedUser.IsActive)
+        {
+            ShowMessage("Debes desactivar el usuario antes del borrado definitivo.", true);
+            return;
+        }
 
-        if (result != MessageBoxResult.Yes)
+        var confirmWindow = new ConfirmDeleteUserWindow(selectedUser.FullName, selectedUser.UserName)
+        {
+            Owner = this
+        };
+
+        var confirmed = confirmWindow.ShowDialog();
+
+        if (confirmed != true)
         {
             return;
         }
@@ -192,7 +195,7 @@ public partial class UsersWindow : Window
                     Contains(user.FullName, query) ||
                     Contains(user.UserName, query) ||
                     Contains(user.Role, query) ||
-                    Contains(user.IsActive ? "Activo" : "Inactivo", query) ||
+                    Contains(user.StatusText, query) ||
                     Contains(user.ExpectedDailyHours.ToString("0.##"), query))
                 .Select(CloneForDisplay)
                 .ToList();
@@ -232,8 +235,8 @@ public partial class UsersWindow : Window
         var hasSelection = selectedUser is not null;
 
         EditSelectedUserButton.IsEnabled = !_isBusy && hasSelection;
-        DeleteSelectedUserButton.IsEnabled = !_isBusy && hasSelection;
         ToggleActiveUserButton.IsEnabled = !_isBusy && hasSelection;
+        DeleteSelectedUserButton.IsEnabled = !_isBusy && hasSelection;
 
         if (selectedUser is null)
         {
@@ -247,7 +250,6 @@ public partial class UsersWindow : Window
     private void SetBusyState(bool isBusy)
     {
         _isBusy = isBusy;
-        RefreshButton.IsEnabled = !isBusy;
         OpenCreateUserButton.IsEnabled = !isBusy;
         SearchTextBox.IsEnabled = !isBusy;
         UsersListBox.IsEnabled = !isBusy;
