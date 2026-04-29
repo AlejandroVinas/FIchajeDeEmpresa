@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Crear usuario"
+       
         Height="580"
         Width="760"
         MinHeight="540"
