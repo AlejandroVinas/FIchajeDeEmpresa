@@ -5,7 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Historial detallado de fichajes"
-       
         Height="680"
         Width="1140"
         MinHeight="620"
@@ -45,6 +44,8 @@
                         <ColumnDefinition Width="0.9*" />
                         <ColumnDefinition Width="14" />
                         <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
@@ -76,6 +77,16 @@
                                 Style="{StaticResource AppPrimaryButtonStyle}"
                                 Click="SearchButton_Click" />
                     </StackPanel>
+
+                    <StackPanel Grid.Column="8"
+                                VerticalAlignment="Bottom">
+                        <Button x:Name="ExportExcelButton"
+                                Width="150"
+                                Content="Exportar Excel"
+                                Style="{StaticResource AppSecondaryButtonStyle}"
+                                Click="ExportExcelButton_Click"
+                                IsEnabled="False" />
+                    </StackPanel>
                 </Grid>
             </Grid>
         </Border>
@@ -98,8 +109,8 @@
 
                     <Border x:Name="MessageBorder"
                             Margin="0,12,0,0"
-                            Background="{StaticResource DangerBackgroundBrush}"
-                            BorderBrush="{StaticResource DangerBorderBrush}"
+                            Background="{StaticResource InfoBackgroundBrush}"
+                            BorderBrush="{StaticResource InfoBorderBrush}"
                             BorderThickness="1"
                             CornerRadius="12"
                             Padding="12"
@@ -107,7 +118,7 @@
                         <TextBlock x:Name="MessageTextBlock"
                                    FontSize="13"
                                    FontWeight="SemiBold"
-                                   Foreground="{StaticResource DangerBrush}"
+                                   Foreground="{StaticResource InfoBrush}"
                                    TextWrapping="Wrap" />
                     </Border>
                 </StackPanel>
