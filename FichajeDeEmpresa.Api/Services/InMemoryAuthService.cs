@@ -96,7 +96,7 @@ public class InMemoryFichajeService : IFichajeService
         var incidentRecord = new FichajeRecordEntity
         {
             UserId = request.UserId,
-            Timestamp = dayDate.AddHours(12),
+            Timestamp = dayDate.Add(DateTime.Now.TimeOfDay),
             Type = "Incidencia",
             Comment = request.Comment.Trim()
         };
