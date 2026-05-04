@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using FichajeDeEmpresa.App.Dialogs;
 using FichajeDeEmpresa.App.Services;
+using FichajeDeEmpresa.Shared.Contracts.Fichajes;
 using FichajeDeEmpresa.Shared.Contracts.Users;
 
 namespace FichajeDeEmpresa.App;
@@ -68,6 +69,48 @@ public partial class UsersWindow : Window
             await LoadUsersAsync();
             ShowMessage("Usuario actualizado correctamente.", false);
         }
+    }
+
+    private async void RegisterIncidentButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (UsersListBox.SelectedItem is not UserSummaryDto selectedUser)
+        {
+            ShowMessage("Selecciona un usuario para registrar la incidencia.", true);
+            return;
+        }
+
+        var incidentWindow = new RegisterIncidentWindow(selectedUser.FullName, selectedUser.UserName)
+        {
+            Owner = this
+        };
+
+        var confirmed = incidentWindow.ShowDialog();
+
+        if (confirmed != true)
+        {
+            return;
+        }
+
+        SetBusyState(true);
+        ShowMessage(string.Empty, false);
+
+        var response = await _apiClient.RegisterIncidentAsync(new RegisterIncidentRequestDto
+        {
+            UserId = selectedUser.UserId,
+            Date = incidentWindow.SelectedDate,
+            Comment = incidentWindow.CommentText
+        });
+
+        SetBusyState(false);
+
+        if (!response.IsSuccess)
+        {
+            ShowMessage(response.Message, true);
+            return;
+        }
+
+        ShowSuccessMessage(response.Message);
+
     }
 
     private async void ToggleActiveUserButton_Click(object sender, RoutedEventArgs e)
@@ -235,6 +278,7 @@ public partial class UsersWindow : Window
         var hasSelection = selectedUser is not null;
 
         EditSelectedUserButton.IsEnabled = !_isBusy && hasSelection;
+        RegisterIncidentButton.IsEnabled = !_isBusy && hasSelection;
         ToggleActiveUserButton.IsEnabled = !_isBusy && hasSelection;
         DeleteSelectedUserButton.IsEnabled = !_isBusy && hasSelection;
 
@@ -282,6 +326,24 @@ public partial class UsersWindow : Window
         }
     }
 
+
+    private void ShowSuccessMessage(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            MessageBorder.Visibility = Visibility.Collapsed;
+            MessageTextBlock.Text = string.Empty;
+            return;
+        }
+
+        MessageBorder.Visibility = Visibility.Visible;
+        MessageTextBlock.Text = message;
+
+        MessageBorder.Background = GetBrush("SuccessBackgroundBrush", "#EAF7EE");
+        MessageBorder.BorderBrush = GetBrush("SuccessBorderBrush", "#B8DDBF");
+        MessageTextBlock.Foreground = GetBrush("SuccessBrush", "#2F7D4A");
+    }
+    
     private Brush GetBrush(string resourceKey, string fallbackHex)
     {
         if (TryFindResource(resourceKey) is Brush brush)

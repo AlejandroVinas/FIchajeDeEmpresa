@@ -32,6 +32,90 @@ public class InMemoryFichajeService : IFichajeService
             "No puedes fichar salida porque no hay un tramo activo.");
     }
 
+    public async Task<FichajeOperationResponseDto> RegisterIncidentAsync(RegisterIncidentRequestDto request)
+    {
+        if (request.UserId <= 0)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "El usuario indicado no es válido."
+            };
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Comment))
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "Debes escribir un comentario para registrar la incidencia."
+            };
+        }
+
+        var dayDate = request.Date.Date;
+        var dayEnd = dayDate.AddDays(1);
+
+        await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
+
+        var user = await dbContext.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == request.UserId);
+
+        if (user is null)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "No se ha encontrado el usuario."
+            };
+        }
+
+        var records = await dbContext.FichajeRecords
+            .Where(f => f.UserId == request.UserId && f.Timestamp >= dayDate && f.Timestamp < dayEnd)
+            .OrderBy(f => f.Timestamp)
+            .ToListAsync();
+
+        if (records.Any(r => NormalizeType(r.Type) == "incidencia"))
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "Ya existe una incidencia registrada para ese día."
+            };
+        }
+
+        if (records.Any(r => NormalizeType(r.Type) != "incidencia"))
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = "Ese día ya tiene movimientos registrados. No se puede añadir una incidencia."
+            };
+        }
+
+        var incidentRecord = new FichajeRecordEntity
+        {
+            UserId = request.UserId,
+            Timestamp = dayDate.AddHours(12),
+            Type = "Incidencia",
+            Comment = request.Comment.Trim()
+        };
+
+        dbContext.FichajeRecords.Add(incidentRecord);
+        await dbContext.SaveChangesAsync();
+
+        records.Add(incidentRecord);
+
+        var summary = BuildDaySummary(records, user.ExpectedDailyHours, dayDate == DateTime.Today ? DateTime.Now : dayEnd);
+
+        return new FichajeOperationResponseDto
+        {
+            IsSuccess = true,
+            Message = "Incidencia registrada correctamente.",
+            Summary = summary
+        };
+    }
+
     public async Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId)
     {
         await using var dbContext = await _dbContextFactory.CreateDbContextAsync();
@@ -111,16 +195,22 @@ public class InMemoryFichajeService : IFichajeService
             .Select(group =>
             {
                 var user = group.First().User!;
-                var endReference = group.Key.Date == DateTime.Today ? DateTime.Now : group.Key.Date.AddDays(1);
-                var daySummary = BuildDaySummary(group.OrderBy(x => x.Timestamp).ToList(), user.ExpectedDailyHours, endReference);
+                var dayDate = group.Key.Date;
+                var endReference = dayDate == DateTime.Today ? DateTime.Now : dayDate.AddDays(1);
+
+                var daySummary = BuildDaySummary(
+                    group.OrderBy(x => x.Timestamp).ToList(),
+                    user.ExpectedDailyHours,
+                    endReference);
 
                 return new AdminFichajeHistoryDayDto
                 {
-                    Date = group.Key.Date,
+                    Date = dayDate,
                     UserId = user.Id,
                     FullName = user.FullName,
                     UserName = user.UserName,
                     WorkedSeconds = daySummary.WorkedSecondsToday,
+                    NormalSeconds = daySummary.NormalSecondsToday,
                     ExtraSeconds = daySummary.ExtraSecondsToday,
                     IsWorking = daySummary.IsWorking,
                     IsPaused = daySummary.IsPaused,
@@ -299,8 +389,6 @@ public class InMemoryFichajeService : IFichajeService
             WorkedSecondsToday = workedSeconds,
             NormalSecondsToday = normalSeconds,
             ExtraSecondsToday = extraSeconds,
-            LastEntryTime = orderedRecords.LastOrDefault(r => NormalizeType(r.Type) == "entrada")?.Timestamp,
-            LastExitTime = orderedRecords.LastOrDefault(r => NormalizeType(r.Type) == "salida")?.Timestamp,
             Movements = movements
         };
     }
@@ -346,6 +434,7 @@ public class InMemoryFichajeService : IFichajeService
         {
             "Entrada" => "Entrada registrada correctamente.",
             "Salida" => "Salida registrada correctamente.",
+            "Incidencia" => "Incidencia registrada correctamente.",
             _ => "Movimiento registrado correctamente."
         };
     }

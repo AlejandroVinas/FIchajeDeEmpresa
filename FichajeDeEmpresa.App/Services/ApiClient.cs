@@ -53,6 +53,44 @@ public class ApiClient
         return await PostFichajeAsync("api/fichajes/salida", request);
     }
 
+    public async Task<FichajeOperationResponseDto> RegisterIncidentAsync(RegisterIncidentRequestDto request)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/fichajes/incidencia", request);
+            var result = await response.Content.ReadFromJsonAsync<FichajeOperationResponseDto>();
+
+            if (result is null)
+            {
+                return new FichajeOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo registrar la incidencia.";
+                }
+            }
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            return new FichajeOperationResponseDto
+            {
+                IsSuccess = false,
+                Message = $"No se pudo conectar con la API. {ex.Message}"
+            };
+        }
+    }
+
     public async Task<FichajeOperationResponseDto> GetTodaySummaryAsync(int userId)
     {
         try
@@ -327,11 +365,26 @@ public class ApiClient
             var response = await _httpClient.PostAsJsonAsync(url, request);
             var result = await response.Content.ReadFromJsonAsync<FichajeOperationResponseDto>();
 
-            return result ?? new FichajeOperationResponseDto
+            if (result is null)
             {
-                IsSuccess = false,
-                Message = "La API no devolvió una respuesta válida."
-            };
+                return new FichajeOperationResponseDto
+                {
+                    IsSuccess = false,
+                    Message = "La API no devolvió una respuesta válida."
+                };
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                result.IsSuccess = false;
+
+                if (string.IsNullOrWhiteSpace(result.Message))
+                {
+                    result.Message = "No se pudo registrar el movimiento.";
+                }
+            }
+
+            return result;
         }
         catch (Exception ex)
         {

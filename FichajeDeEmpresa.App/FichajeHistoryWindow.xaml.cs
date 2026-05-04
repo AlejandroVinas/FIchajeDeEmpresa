@@ -427,7 +427,17 @@ public partial class FichajeHistoryWindow : Window
             return "En pausa";
         }
 
+        if (day.Movements.Any(m => NormalizeType(m.Type) == "incidencia"))
+        {
+            return "Incidencia";
+        }
+
         return "Cerrado";
+    }
+
+    private static string NormalizeType(string? type)
+    {
+        return (type ?? string.Empty).Trim().ToLowerInvariant();
     }
 
     private static string FormatWorkedTime(int workedSeconds)

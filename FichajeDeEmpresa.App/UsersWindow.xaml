@@ -5,11 +5,10 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Usuarios del sistema"
-      
         Height="720"
-        Width="1080"
+        Width="1140"
         MinHeight="640"
-        MinWidth="940"
+        MinWidth="980"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         Background="{StaticResource WindowBackgroundBrush}">
@@ -53,7 +52,7 @@
 
                 <Grid Grid.Row="2">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="320" />
+                        <ColumnDefinition Width="280" />
                         <ColumnDefinition Width="18" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
@@ -70,28 +69,35 @@
                                HorizontalAlignment="Right"
                                VerticalAlignment="Bottom">
                         <Button x:Name="EditSelectedUserButton"
-                                Width="130"
-                                Margin="0,0,12,10"
+                                Width="110"
+                                Margin="0,0,10,10"
                                 Content="Editar"
                                 Style="{StaticResource AppSecondaryButtonStyle}"
                                 Click="EditSelectedUserButton_Click" />
 
+                        <Button x:Name="RegisterIncidentButton"
+                                Width="170"
+                                Margin="0,0,10,10"
+                                Content="Registrar incidencia"
+                                Style="{StaticResource AppSecondaryButtonStyle}"
+                                Click="RegisterIncidentButton_Click" />
+
                         <Button x:Name="ToggleActiveUserButton"
-                                Width="150"
-                                Margin="0,0,12,10"
+                                Width="130"
+                                Margin="0,0,10,10"
                                 Content="Desactivar"
                                 Style="{StaticResource AppSecondaryButtonStyle}"
                                 Click="ToggleActiveUserButton_Click" />
 
                         <Button x:Name="DeleteSelectedUserButton"
-                                Width="120"
-                                Margin="0,0,12,10"
+                                Width="110"
+                                Margin="0,0,10,10"
                                 Content="Borrar"
                                 Style="{StaticResource AppDangerButtonStyle}"
                                 Click="DeleteSelectedUserButton_Click" />
 
                         <Button x:Name="OpenCreateUserButton"
-                                Width="150"
+                                Width="130"
                                 Margin="0,0,0,10"
                                 Content="Crear usuario"
                                 Style="{StaticResource AppPrimaryButtonStyle}"

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <ApplicationIcon>Assets\Icons\app-icon.ico</ApplicationIcon>
+    <AssemblyName>FichajeDeEmpresa.App.V2</AssemblyName>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <Nullable>enable</Nullable>

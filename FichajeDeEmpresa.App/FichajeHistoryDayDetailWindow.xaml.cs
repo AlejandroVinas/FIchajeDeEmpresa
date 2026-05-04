@@ -29,8 +29,7 @@ public partial class FichajeHistoryDayDetailWindow : Window
         StatusValueTextBlock.Text = GetStatusText(_day);
         WorkedValueTextBlock.Text = FormatTime(_day.WorkedSeconds);
 
-        var normalSeconds = Math.Max(0, _day.WorkedSeconds - _day.ExtraSeconds);
-        NormalValueTextBlock.Text = FormatTime(normalSeconds);
+        NormalValueTextBlock.Text = FormatTime(_day.NormalSeconds);
         ExtraValueTextBlock.Text = FormatTime(_day.ExtraSeconds);
 
         LoadMovements();
@@ -117,14 +116,6 @@ public partial class FichajeHistoryDayDetailWindow : Window
                 subtleBrush = strongBrush;
                 break;
 
-            case "pausa":
-            case "reanudar":
-                border.Background = GetBrush("WarningBackgroundBrush", "#FFF4D9");
-                border.BorderBrush = GetBrush("WarningBorderBrush", "#E9C66B");
-                strongBrush = GetBrush("WarningBrush", "#A56A00");
-                subtleBrush = strongBrush;
-                break;
-
             case "salida":
                 border.Background = GetBrush("DangerBackgroundBrush", "#FDECEC");
                 border.BorderBrush = GetBrush("DangerBorderBrush", "#E8B5B5");
@@ -132,10 +123,17 @@ public partial class FichajeHistoryDayDetailWindow : Window
                 subtleBrush = strongBrush;
                 break;
 
-            default:
+            case "incidencia":
                 border.Background = GetBrush("InfoBackgroundBrush", "#FFF8E1");
                 border.BorderBrush = GetBrush("InfoBorderBrush", "#E8D089");
                 strongBrush = GetBrush("InfoBrush", "#7B5B12");
+                subtleBrush = strongBrush;
+                break;
+
+            default:
+                border.Background = GetBrush("SoftCardBackgroundBrush", "#FBF7EE");
+                border.BorderBrush = GetBrush("BorderBrushSoft", "#E7DDC8");
+                strongBrush = GetBrush("TextSecondaryBrush", "#6E624E");
                 subtleBrush = strongBrush;
                 break;
         }
@@ -166,6 +164,11 @@ public partial class FichajeHistoryDayDetailWindow : Window
         if (day.IsPaused)
         {
             return "En pausa";
+        }
+
+        if (day.Movements.Any(m => NormalizeType(m.Type) == "incidencia"))
+        {
+            return "Incidencia";
         }
 
         return "Cerrado";

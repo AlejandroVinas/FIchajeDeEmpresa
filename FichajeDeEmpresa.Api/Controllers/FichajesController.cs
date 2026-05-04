@@ -41,6 +41,19 @@ public class FichajesController : ControllerBase
         return Ok(result);
     }
 
+    [HttpPost("incidencia")]
+    public async Task<ActionResult<FichajeOperationResponseDto>> RegisterIncidentAsync([FromBody] RegisterIncidentRequestDto request)
+    {
+        var result = await _fichajeService.RegisterIncidentAsync(request);
+
+        if (!result.IsSuccess)
+        {
+            return BadRequest(result);
+        }
+
+        return Ok(result);
+    }
+
     [HttpGet("resumen-hoy/{userId:int}")]
     public async Task<ActionResult<FichajeOperationResponseDto>> GetTodaySummaryAsync(int userId)
     {
